@@ -1,0 +1,30 @@
+Train:
+{
+  "command": "create",
+  "description": "Create a resource from a file or from stdin.\nJSON and YAML formats are accepted.",
+  "syntax": "kubectl create -f FILENAME",
+  "code": "kubectl create -f ./pod.json",
+  "cot": "1) Use the 'create' subcommand to create a resource\n2) Use the '-f' flag to specify the file that contains the resource definition\n3) Provide the filename './pod.json' to use the data in the pod.json file\n4) The command will create the pod using the data in the pod.json file",
+  "Question": "how to create pod"
+}
+
+COT training:
+how to create pod\n
+Let's think step by step
+
+#Steps:
+cot\n
+#Code:
+code
+
+Eval:
+{
+  "command": "create",
+  "description": "Create a resource from a file or from stdin.\nJSON and YAML formats are accepted.",
+  "syntax": "kubectl create -f FILENAME",
+  "code": "kubectl create -f ./pod.json",
+  "cot": "1) Use the 'create' subcommand to create a resource\n2) Use the '-f' flag to specify the file that contains the resource definition\n3) Provide the filename './pod.json' to use the data in the pod.json file\n4) The command will create the pod using the data in the pod.json file",
+  "Question": "Create a pod using the data in pod.json",
+}
+
+
