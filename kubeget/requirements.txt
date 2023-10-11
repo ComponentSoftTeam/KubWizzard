@@ -1,0 +1,8 @@
+beautifulsoup4
+requests
+markdownify
+python-dotenv
+openai
+tqdm
+datasets
+huggingface_hub
