@@ -9,7 +9,9 @@ You can find the dataset on huggingface [here](https://huggingface.co/datasets/K
 We tried two methods for finetuning a flan-t5 model, one with basic question answering, and the other with providing a chain of thought process.  
 
 
+
+
 | Method          | Notebook                                       |
 | --------------- | ---------------------------------------------- |
-| Normal QA     | [Open Notebook](https://colab.research.google.com/github/tmskss/Flan-T5-K8S-QA/blob/main/notebooks/flan_t5_k8s.ipynb) |
-| CoT QA  | [Open Notebook](https://colab.research.google.com/github/tmskss/Flan-T5-K8S-QA/blob/main/notebooks/flan_t5_k8s_cot.ipynb)  |
+| Normal QA     | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tmskss/Flan-T5-K8S-QA/blob/main/notebooks/flan_t5_k8s.ipynb) |
+| CoT QA  |[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tmskss/Flan-T5-K8S-QA/blob/main/notebooks/flan_t5_k8s_cot.ipynb) |
