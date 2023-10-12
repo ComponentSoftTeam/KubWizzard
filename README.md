@@ -12,4 +12,4 @@ We tried two methods for finetuning a flan-t5 model, one with basic question ans
 | Method          | Notebook                                       |
 | --------------- | ---------------------------------------------- |
 | Normal QA     | [Open Notebook](https://colab.research.google.com/github/tmskss/Flan-T5-K8S-QA/blob/main/notebooks/flan_t5_k8s.ipynb) |
-| CoT QA  | [Open Notebook](https://nbviewer.jupyter.org/github/tmskss/Flan-T5-K8S-QA/blob/main/notebooks/flan_t5_k8s_cot.ipynb)  |
+| CoT QA  | [Open Notebook](https://colab.research.google.com/github/tmskss/Flan-T5-K8S-QA/blob/main/notebooks/flan_t5_k8s_cot.ipynb)  |
