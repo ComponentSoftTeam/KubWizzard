@@ -57,7 +57,7 @@ def gen_cot(dataset):
             for example in examples:
               example_description = example['description']
               example_code = example['code']
-              prompt = f'Provide a chain of tought for the following command in the #Command title({example_code}) based on the provided documentation and the examples, reason why the provided command does what the #Description says:\n'
+              prompt = f'Provide the  chain of thought for the following command in the #Command title({example_code}) based on the provided documentation and the examples, reason why the provided command does what the #Description says:\n'
               prompt += '####Examples:\n'
               prompt += example_prompt
               prompt += '####Prompt\n'
@@ -67,9 +67,9 @@ def gen_cot(dataset):
               prompt += f'#Syntax: {syntax}\n'
               prompt += f'#Available Flags:\n{flags}\n'
               prompt += f'#Purpose: {example_description}\n'
-              prompt += f'#Note: Not all Flags are used, only talk about the used ones.\n Keep the answer short and organized with only the cain of tought steps as the output. Use the same notation for the 1) 2) as in the example\n'
+              prompt += f'#Note: Not all Flags are used, only talk about the used ones.\nKeep the answer short and organized with only the cain of tought steps as the output. Use the same notation for the 1) 2) as in the example\n'
               prompt += f'##Output:\n'
-              prompt += f'#Chain of tought:'
+              prompt += f'#Chain of thought:'
               cot = gpt(K8S_EXPERT, prompt)
               example['cot'] = cot
               pbar.update(1)
@@ -165,7 +165,7 @@ def gen_qi(dataset):
             prompt += f'##Output:\n'
             prompt += f'The 10 questions numbered from 1 to 10, one line each!'
             prompt += f'#Questions:'
-            qi = gpt(K8S_QI, prompt, 'gpt-4')
+            qi = gpt(K8S_QI, prompt, 'gpt-3.5-turbo')
 
             qis = [x.strip() for x in qi.strip().split('\n') if x.strip() != ""]
             qis = [x for x in qis if not x.startswith('#')]
