@@ -2,11 +2,11 @@
 import json
 import argparse
 
-from augment import gen_cot, gen_qi
+from augment import gen_cot, gen_qi, gen_params
 from ops import flatten_and_split, upload
 from scrape import parse_kubectl
 from config import HUGGINGFACE_DATASET_REPO
-
+from ruleset import ruleset_expand
 
 def main(args):
     
@@ -17,6 +17,8 @@ def main(args):
         train_dataset, validate_dataset = json_data['train'], json_data['validate']
     elif args.generate:
         dataset = parse_kubectl()
+        dataset = ruleset_expand(dataset, 30000)
+        return
         dataset = gen_cot(dataset)
         dataset = gen_qi(dataset)
 

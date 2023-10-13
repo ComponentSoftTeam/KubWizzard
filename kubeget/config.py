@@ -19,6 +19,7 @@ class Config:
         self.HUGGINGFACE_DATASET_REPO: str = os.getenv("HUGGINGFACE_DATASET_REPO")
         self.CACHE_DIR: str = ".cache"
         self.base_url: str = "https://kubernetes.io/docs/reference/"
+        self.ruleset: str = os.getenv("RULESET")
 
         if not os.path.exists(self.CACHE_DIR):
           os.makedirs(self.CACHE_DIR)
@@ -29,3 +30,4 @@ config = Config()
 HUGGINGFACE_DATASET_REPO = config.HUGGINGFACE_DATASET_REPO 
 CACHE_DIR = config.CACHE_DIR
 base_url = config.base_url
+RULESET = config.ruleset

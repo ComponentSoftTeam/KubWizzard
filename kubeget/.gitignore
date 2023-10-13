@@ -2,3 +2,7 @@
 .env
 
 __pycache__/**
+.vscode/**
+
+*.json
+!ruleset.json
