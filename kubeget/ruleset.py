@@ -4,10 +4,8 @@ from tqdm import tqdm
 
 import random
 import json
-import hashlib
 import re
-import array
-
+import hashlib
 
 from multiprocessing import Pool
 import multiprocessing
@@ -171,34 +169,46 @@ class ListMatcher(Matcher):
 
 class RuleSub:
     mem = dict()
-    SEP_STR = "űáű"
-    SEP = array.array('i', [ord(c) for c in SEP_STR])
+    SEP = "űáű"
 
     def __init__(self, text):
-        self.text = array.array('u')
-        self.text.fromunicode(text)
-        self.mask = array.array('i', [0] * len(text))
+        self.text = list(text)
+        self.mask = [0] * len(text)
 
     def show(self):
-        return self.text.tounicode()
+        return "".join(self.text)
+
+    @staticmethod
+    @lru_cache(maxsize = None, typed = False)
+    def get_str_cached(text, mask):
+        sep = "űáű"
+
+        return "".join(
+            [
+                curr_char if curr == 0 else sep
+                for ((curr, next), curr_char) in zip(pairwise(mask), text)
+                if curr == 0 or next == 0
+            ]
+            + ([text[-1]] if mask[-1] == 0 else [])
+        )
 
     def get_str(self):
-        key = hash((self.text.tobytes, self.mask.tobytes()))
+        # return self.get_str_cached(tuple(self.text), tuple(self.mask))
+        key = hash((tuple(self.text), tuple(self.mask)))
         
         if key not in RuleSub.mem:
             RuleSub.mem[key] = "".join(
                 [
-                    curr_char if curr == 0 else RuleSub.SEP_STR
+                    curr_char if curr == 0 else RuleSub.SEP
                     for ((curr, next), curr_char) in zip(pairwise(self.mask), self.text)
                     if curr == 0 or next == 0
                 ]
                 + ([self.text[-1]] if self.mask[-1] == 0 else [])
             )
-
         return RuleSub.mem[key]
 
     def highlight(self):
-        return color_text_with_mask(self.text.tounicode(), self.mask)
+        return color_text_with_mask("".join(self.text), self.mask)
 
 class Rule:
     def __init__(self, rule: str, values):
@@ -259,20 +269,17 @@ class RuleSet:
         desc = RuleSub(desc)
         code = RuleSub(code)
 
-        # sub_key = (desc.text.tobytes(), code.text.tobytes()) # The masks are still empty
+        sub_key = (tuple(desc.text), tuple(code.text)) # The masks are still empty
 
-        # if sub_key not in RuleSet.mem:
-        #     RuleSet.mem[sub_key] = [
-        #         (match[1], rule, match[2], match[3])
-        #         for rule, match in zip(self.rules, map(lambda rule: rule.match(desc, code, namespace), self.rules))
-        #         if match
-        #     ]
-
-        matching_rules =  [
+        if sub_key not in RuleSet.mem:
+            RuleSet.mem[sub_key] = [
                 (match[1], rule, match[2], match[3])
                 for rule, match in zip(self.rules, map(lambda rule: rule.match(desc, code, namespace), self.rules))
                 if match
             ]
+
+        matching_rules = RuleSet.mem[sub_key]
+
         # print(f'# From\nDescription: {desc.highlight()}\nCode: {code.highlight()}\n')
         sub_order = 0
         while matching_rules:
@@ -325,15 +332,13 @@ class RuleSet:
                 sub_text = matcher.sub(text_str, new_val)
                 sub_text.sort(key=lambda x: -x[0])
 
-                for start, length, _value in sub_text:
+                for start, length, value in sub_text:
                     start += shift_sep_mask_text[start]
                     start += shift_mask_text[start]
-                    value = array.array('u')
-                    value.fromunicode(_value)
 
                     rulesub.text = (
                         rulesub.text[:start]
-                        + value
+                        + list(value)
                         + rulesub.text[start + length :]
                     )
                     # middle = rulesub.mask[start : start + length]
@@ -341,7 +346,7 @@ class RuleSet:
                     #     raise RuntimeError("writing restricted characters")
                     rulesub.mask = (
                         rulesub.mask[:start]
-                        + array.array('i', [sub_order] * len(value))
+                        + [sub_order] * len(value)
                         + rulesub.mask[start + length :]
                     )
 
