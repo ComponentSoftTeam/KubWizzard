@@ -1,44 +1,17 @@
-from functools import lru_cache
-import time
 from tqdm import tqdm
 
 import random
 import json
-import hashlib
 import re
 import array
-
 
 from multiprocessing import Pool
 import multiprocessing
 
-from itertools import pairwise
+from itertools import pairwise, count, takewhile
 from benchmark import benchmark
 
 from config import RULESET
-
-
-def color_text_with_mask(text, mask):
-    colors = [
-        "\033[91m",
-        "\033[92m",
-        "\033[93m",
-        "\033[94m",
-        "\033[95m",
-        "\033[96m",
-        "\033[97m",
-    ]
-    reset_color = "\033[0m"
-
-    colored_text = ""
-
-    for char, color_index in zip(text, mask):
-        if 0 <= color_index < len(colors):
-            colored_text += f"{colors[color_index]}{char}{reset_color}"
-        else:
-            colored_text += char
-
-    return colored_text
 
 
 class Matcher:
@@ -57,66 +30,85 @@ class Matcher:
         if "|" in pattern:
             return MultiMatcher(pattern)
 
-        if (pattern.startswith("[") and not pattern.endswith("]")) or (
-            not pattern.startswith("[") and pattern.endswith("]")
-        ):
+        if pattern.startswith("[") != pattern.endswith("]"):
             raise ValueError(f"Invalid pattern {pattern}")
 
         if pattern.startswith("["):
             return ListMatcher(pattern)
-        elif pattern == "":
+
+        if pattern == "":
             return AnyMatcher("")
-        else:
-            return ExactMatcher(pattern)
+
+        return ExactMatcher(pattern)
 
 
-# For ''
+# Matching: ''
 class AnyMatcher(Matcher):
+    """Matching rule(s): ''"""
+
+    PRIO = 0
+
     def __init__(self, pattern):
         super().__init__(pattern)
 
     def match(self, text):
-        return (True, 0, self)
+        return (AnyMatcher.PRIO, self)
 
     def sub(self, text, new_val):
         return []
 
 
-# For foo
 class ExactMatcher(Matcher):
+    """
+    Matching rule(s): 'foo'
+    Matches every accurance of the pattern
+    """
+
+    PRIO = 3
+
     def __init__(self, pattern):
         super().__init__(pattern)
 
     def match(self, text):
-        res = self.pattern in text
-        if not res:
-            return False
-        return (True, 3, self)
+        return (ExactMatcher.PRIO, self) if self.pattern in text else None
 
     def sub(self, text, new_val):
-        start_positions = [match.start() for match in re.finditer(self.pattern, text)]
-
+        start_positions = (match.start() for match in re.finditer(self.pattern, text))
         return [(s, len(self.pattern), new_val) for s in start_positions]
 
 
-# For foo|bar
 class MultiMatcher(Matcher):
+    """
+    Matching rule(s): any rule that a subpattern has
+    Matches the pattern with the highest priority out of the matching patterns
+    """
+
+    # Does not do substitution, only the subpatterns substitues, so it does not need a priority
+
     def __init__(self, pattern):
         super().__init__(pattern)
-        sub_patterns = [x.strip() for x in pattern.split("|")]
+        sub_patterns = (x.strip() for x in pattern.split("|"))
         self.matchers = [Matcher.create(p) for p in sub_patterns]
 
     def match(self, text):
-        matches = [m.match(text) for m in self.matchers]
-        matches = [m for m in matches if m]
-        matches = [(b, p, matcher) for (b, p, matcher) in matches]
-        if not matches:
-            return False
-        return max(matches, key=lambda x: x[1])
+        # TODO(Kristofy): This does not check for overlapping words:
+        # so 'banana' with a pattern ana will match twice, but
+        # the two matching parts are overlapping in the middle 'a' string
+        # it is a rare case, so it's low priority
+
+        match_results = (m.match(text) for m in self.matchers)
+        matches = [m for m in match_results if m]
+        return max(matches, key=lambda x: x[0]) if matches else None
 
 
-# For [foo, bar]
 class ListMatcher(Matcher):
+    """
+    Matching rule(s): 'foo' and 'bar' as a substring in this order
+    Only matches the first accurance of the subpatterns where they match in order
+    """
+
+    PRIO = 4
+
     def __init__(self, pattern):
         super().__init__(pattern)
 
@@ -124,67 +116,51 @@ class ListMatcher(Matcher):
         self.sub_patterns = [p.strip() for p in pattern.split(",")]
 
     def match(self, text):
-        valid = [[-1]]
-        for pattern in self.sub_patterns:
-            start_indexes = [m.start() for m in re.finditer(pattern, text)]
-            valid.append(start_indexes)
+        valid = ((m.start() for m in re.finditer(pattern, text)) for pattern in self.sub_patterns)
 
         latest = -1
-        positions = []
-        # Note that this does not check for overlapping sequences
-        for start_indexes in valid[1:]:
-            for index in start_indexes:
-                if index > latest:
-                    latest = index
-                    break
-            else:
-                return False
-            positions.append(latest)
+        for start_indexes in valid:
+            latest = next((ind for ind in start_indexes if ind > latest), None)
+            if not latest:
+                return None
 
-        return (True, 4, self)
+        return (ListMatcher.PRIO, self)
 
     def sub(self, text, new_vals):
-        valid = [[-1]]
-        for pattern in self.sub_patterns:
-            start_indexes = [m.start() for m in re.finditer(pattern, text)]
-            valid.append(start_indexes)
+        valid = ((m.start() for m in re.finditer(pattern, text)) for pattern in self.sub_patterns)
 
         latest = -1
         positions = []
-        # Note that this does not check for overlapping sequences
-        for start_indexes in valid[1:]:
-            for index in start_indexes:
-                if index > latest:
-                    latest = index
-                    break
-            else:
-                return False
+
+        # TODO(kristofy): this does not check for overlapping words in the sequence
+        # So [apple, lemma] in 'appbananalemma lemma' would both match in applemma instead
+        # of the expected matching with the two separate words
+        for start_indexes in valid:
+            latest = next((ind for ind in start_indexes if ind > latest), None)
+            if not latest:
+                raise RuntimeError("The pattern sould match when sub is called")
             positions.append(latest)
 
-        new_values = self.sub_patterns
-        new_vals = [v.strip() for v in new_vals.strip()[1:-1].split(",")]
-        return [
-            (s, len(p), v) for s, p, v in zip(positions, self.sub_patterns, new_vals)
-        ]
-
+        new_vals = (v.strip() for v in new_vals.strip()[1:-1].split(","))
+        return [(s, len(p), v) for s, p, v in zip(positions, self.sub_patterns, new_vals)]
 
 
 class RuleSub:
     mem = dict()
     SEP_STR = "űáű"
-    SEP = array.array('i', [ord(c) for c in SEP_STR])
+    SEP = array.array("i", [ord(c) for c in SEP_STR])
 
     def __init__(self, text):
-        self.text = array.array('u')
+        self.text = array.array("u")
         self.text.fromunicode(text)
-        self.mask = array.array('i', [0] * len(text))
+        self.mask = array.array("i", [0] * len(text))
 
     def show(self):
         return self.text.tounicode()
 
     def get_str(self):
         key = (self.text.tobytes(), self.mask.tobytes())
-        
+
         if key not in RuleSub.mem:
             RuleSub.mem[key] = "".join(
                 [
@@ -198,7 +174,24 @@ class RuleSub:
         return RuleSub.mem[key]
 
     def highlight(self):
-        return color_text_with_mask(self.text.tounicode(), self.mask)
+        # Terminal escape sequences for colors
+        RESET_COLOR = "\033[0m"
+        COLORS = [
+            RESET_COLOR,
+            "\033[91m",
+            "\033[92m",
+            "\033[93m",
+            "\033[94m",
+            "\033[95m",
+            "\033[96m",
+            "\033[97m",
+        ]
+
+        n = len(COLORS)
+        return "".join(
+            [f"{COLORS[color_index % n]}{char}{RESET_COLOR}" for char, color_index in zip(self.text, self.mask)]
+        )
+
 
 class Rule:
     def __init__(self, rule: str, values):
@@ -230,22 +223,22 @@ class Rule:
     @benchmark
     def match(self, desc, code, namespace=None):
         if not self.is_global and namespace != self.namespace:
-            return False
+            return None
 
         prio = 0 if self.is_global else 16
 
         matches_desc = self.desc_matcher.match(desc.get_str())
         if not matches_desc:
-            return False
+            return None
         matches_code = self.code_matcher.match(code.get_str())
         if not matches_code:
-            return False
+            return None
 
-        (_, prio_desc, matcher_desc) = matches_desc
-        (_, prio_code, matcher_code) = matches_code
+        (prio_desc, matcher_desc) = matches_desc
+        (prio_code, matcher_code) = matches_code
 
         prio += prio_desc + prio_code
-        return (True, prio, matcher_desc, matcher_code)
+        return (prio, matcher_desc, matcher_code)
 
 
 class RuleSet:
@@ -259,44 +252,37 @@ class RuleSet:
         desc = RuleSub(desc)
         code = RuleSub(code)
 
-        sub_key = hash((desc.text.tobytes(), code.text.tobytes())) # The masks are still empty
+        # The masks are still empty
+        sub_key = (desc.text.tobytes(), code.text.tobytes())
 
+        # Ceching based on only the text, because at the beginning the mask is always empty
         if sub_key not in RuleSet.mem:
             RuleSet.mem[sub_key] = [
-                (match[1], rule, match[2], match[3])
-                for rule, match in zip(self.rules, map(lambda rule: rule.match(desc, code, namespace), self.rules))
+                (match[0], rule, match[1], match[2])
+                for rule, match in zip(
+                    self.rules,
+                    map(lambda rule: rule.match(desc, code, namespace), self.rules),
+                )
                 if match
             ]
 
         matching_rules = RuleSet.mem[sub_key]
-        # matching_rules =  [
-        #         (match[1], rule, match[2], match[3])
-        #         for rule, match in zip(self.rules, map(lambda rule: rule.match(desc, code, namespace), self.rules))
-        #         if match
-        #     ]
-        # print(f'# From\nDescription: {desc.highlight()}\nCode: {code.highlight()}\n')
-        sub_order = 0
-        while matching_rules:
-            sub_order += 1
-            _, rule, matcher_desc, matcher_code = max(
-                matching_rules, key=lambda x: x[0]
-            )
 
+        for sub_order in takewhile(lambda _: matching_rules, count(start=1)):
+            _, rule, matcher_desc, matcher_code = max(matching_rules, key=lambda x: x[0])
             new_val_desc, new_val_code = random.choice(rule.values)
 
-            for rulesub, text_str, matcher, new_val in [
-                (desc, desc.get_str(), matcher_desc, new_val_desc),
-                (code, code.get_str(), matcher_code, new_val_code),
+            for rulesub, matcher, new_val in [
+                (desc, matcher_desc, new_val_desc),
+                (code, matcher_code, new_val_code),
             ]:
                 n = len(rulesub.text)
+                text_str:str = rulesub.get_str()
                 shift_sep_mask_text = [0] * len(text_str)
-                for i in range(len(shift_sep_mask_text) - 2):
-                    if (
-                        text_str[i] == "ű"
-                        and text_str[i + 1] == "á"
-                        and text_str[i + 2] == "ű"
-                    ):
-                        shift_sep_mask_text[i] = -3
+
+                for i in range(len(shift_sep_mask_text) - len(RuleSub.SEP_STR)):
+                    if text_str.startswith(RuleSub.SEP_STR, i):
+                        shift_sep_mask_text[i] = -len(RuleSub.SEP_STR)
 
                 for i in range(1, len(shift_sep_mask_text)):
                     shift_sep_mask_text[i] += shift_sep_mask_text[i - 1]
@@ -320,40 +306,34 @@ class RuleSet:
                 for i in range(1, n):
                     shift_mask_text[i] += shift_mask_text[i - 1]
 
-                shift_mask_text = [
-                    m for m, b in zip(shift_mask_text, rulesub.mask) if b == 0
-                ]
+                shift_mask_text = [m for m, b in zip(shift_mask_text, rulesub.mask) if b == 0]
                 sub_text = matcher.sub(text_str, new_val)
                 sub_text.sort(key=lambda x: -x[0])
 
                 for start, length, _value in sub_text:
                     start += shift_sep_mask_text[start]
                     start += shift_mask_text[start]
-                    value = array.array('u')
+                    value = array.array("u")
                     value.fromunicode(_value)
 
-                    rulesub.text = (
-                        rulesub.text[:start]
-                        + value
-                        + rulesub.text[start + length :]
-                    )
-                    # middle = rulesub.mask[start : start + length]
-                    # if any(x != 0 for x in middle):
-                    #     raise RuntimeError("writing restricted characters")
+                    rulesub.text = rulesub.text[:start] + value + rulesub.text[start + length :]
+                    middle = rulesub.mask[start : start + length]
+                    if any(x != 0 for x in middle):
+                        raise RuntimeError("writing restricted characters")
                     rulesub.mask = (
                         rulesub.mask[:start]
-                        + array.array('i', [sub_order] * len(value))
+                        + array.array("i", [sub_order] * len(value))
                         + rulesub.mask[start + length :]
                     )
 
-            rules = [rule for (_, rule, _, _) in matching_rules]
+            rules = (rule for (_, rule, _, _) in matching_rules)
 
-            _matching_rules = [
-                (rule, rule.match(desc, code, namespace)) for rule in rules
-            ]
             matching_rules = [
-                (match[1], rule, match[2], match[3])
-                for rule, match in _matching_rules
+                (match[0], rule, match[1], match[2])
+                for rule, match in zip(
+                    self.rules,
+                    map(lambda rule: rule.match(desc, code, namespace), rules),
+                )
                 if match
             ]
 
@@ -366,9 +346,7 @@ def do_batch(dataset_ruleset):
 
     expanded_dataset = [
         (
-            ruleset.expand(
-                example["description"], example["code"], data["command"].strip()
-            ),
+            ruleset.expand(example["description"], example["code"], data["command"].strip()),
             (
                 data["command"],
                 data["description"],
@@ -392,10 +370,7 @@ def do_batch(dataset_ruleset):
         for expansion, (command, desc, syntax, flags) in expanded_dataset
     ]
 
-    hashes = [
-        hash((data[0], expansion[0], expansion[1]))
-        for expansion, data in expanded_dataset
-    ]
+    hashes = [hash((data[0], expansion[0], expansion[1])) for expansion, data in expanded_dataset]
 
     return results, hashes
 
@@ -449,9 +424,7 @@ def ruleset_expand(dataset, size):
                 data["example_code"],
                 data["command"].strip(),
             )
-            data_hash = hash(
-                (data["command"], data["example_description"], data["example_code"])
-            )
+            data_hash = hash((data["command"], data["example_description"], data["example_code"]))
             return data, data_hash
 
         while len(result_dataset) < size:
