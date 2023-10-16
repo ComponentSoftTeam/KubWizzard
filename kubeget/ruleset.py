@@ -193,8 +193,7 @@ class RuleSub:
         )
 
     def get_str(self):
-        # return self.get_str_cached(tuple(self.text), tuple(self.mask))
-        key = hash((tuple(self.text), tuple(self.mask)))
+        key = (self.text.tobytes(), self.mask.tobytes())
         
         if key not in RuleSub.mem:
             RuleSub.mem[key] = "".join(
@@ -269,7 +268,7 @@ class RuleSet:
         desc = RuleSub(desc)
         code = RuleSub(code)
 
-        sub_key = (tuple(desc.text), tuple(code.text)) # The masks are still empty
+        sub_key = hash((desc.text.tobytes(), code.text.tobytes())) # The masks are still empty
 
         if sub_key not in RuleSet.mem:
             RuleSet.mem[sub_key] = [
@@ -279,7 +278,11 @@ class RuleSet:
             ]
 
         matching_rules = RuleSet.mem[sub_key]
-
+        # matching_rules =  [
+        #         (match[1], rule, match[2], match[3])
+        #         for rule, match in zip(self.rules, map(lambda rule: rule.match(desc, code, namespace), self.rules))
+        #         if match
+        #     ]
         # print(f'# From\nDescription: {desc.highlight()}\nCode: {code.highlight()}\n')
         sub_order = 0
         while matching_rules:
