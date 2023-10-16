@@ -6,3 +6,4 @@ openai
 tqdm
 datasets
 huggingface_hub
+numba

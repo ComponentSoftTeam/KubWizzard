@@ -1,8 +1,11 @@
 import json
 from gpt import gpt
 from tqdm import tqdm
+from network import batch_request
 import random
 
+#TODO(Kristofy): Move the examples out to a json config file
+#TODO(Kristofy): Check out the propt engeneering website and check the alternative for these prompts
 
 example_param_prompts = [
     """
@@ -55,47 +58,6 @@ K8S_PARAM_EXTRACTOR = (
 )
 
 
-def gen_params(dataset):
-    with tqdm(
-        total=sum(len(x["examples"]) for x in dataset),
-        leave=True,
-        desc="Generate Params ",
-    ) as pbar:
-        with open('params.json', "w") as f:
-            json.dump(dataset, f)
-        return
-    
-        for data in dataset:
-            data = random.choice(dataset)
-            command = data["command"]
-            description = data["description"]
-            syntax = data["syntax"]
-            examples = data["examples"]
-            flags = data["flags"]
-
-            for example in examples:
-                example = random.choice(examples)
-                example_description = example["description"]
-                example_code = example["code"]
-                # prompt = f'Provide the  chain of thought for the following command in the #Command title({example_code}) based on the provided documentation and the examples, reason why the provided command does what the #Description says:\n'
-                # prompt += '####Examples:\n'
-                # prompt += example_prompt
-                # prompt += '####Prompt\n'
-                prompt = ""
-                prompt += f"##Input:\n"
-                prompt += f"#Command: {example_code}\n"
-                prompt += f"#Description: {description}\n"
-                prompt += f"#Syntax: {syntax}\n"
-                prompt += f"#Available Flags:\n{flags}\n"
-                prompt += f"#Purpose: {example_description}\n"
-                prompt += f"##Output:\n"
-                # cot = gpt(K8S_EXPERT, prompt)
-                # example['cot'] = cot
-                pbar.update(1)
-
-    return dataset
-
-
 example_cot_prompts = [
     """
 ##Input:
@@ -143,7 +105,7 @@ example_cot_prompt = "\n".join(
 )
 
 K8S_EXPERT = (
-    "You are a professinal developper that knows kubernetes and the kubectl cli."
+    "You are a professinal developer that knows kubernetes and the kubectl cli."
 )
 
 
@@ -151,6 +113,7 @@ def gen_cot(dataset):
     with tqdm(
         total=sum(len(x["examples"]) for x in dataset), leave=True, desc="Generate CoT"
     ) as pbar:
+        
         for data in dataset:
             command = data["command"]
             description = data["description"]
@@ -180,7 +143,6 @@ def gen_cot(dataset):
 
     return dataset
 
-
 example_qi_prompts = [
     """
 ##Input:
@@ -207,6 +169,7 @@ JSON and YAML formats are accepted.
 9. generate new pod from file
 10. create pod
 """,
+
     """
 ##Input:
 #Command: kubectl exec mypod -c ruby-container -- date
@@ -237,7 +200,7 @@ JSON and YAML formats are accepted.
 example_qi_prompt = "\n".join(
     [f"###Example {i+1}{p}" for i, p in enumerate(example_qi_prompts)]
 )
-K8S_QI = "You are a professinal developper that knows kubernetes and the kubectl cli."
+K8S_QI = "You are a professinal developer that knows kubernetes and the kubectl cli."
 
 
 def gen_qi(dataset):
@@ -255,7 +218,6 @@ def gen_qi(dataset):
             syntax = data["syntax"]
             examples = data["examples"]
             flags = data["flags"]
-
             for example in examples:
                 example_description = example["description"]
                 example_code = example["code"]
@@ -278,7 +240,7 @@ def gen_qi(dataset):
                 prompt += f"The 10 questions numbered from 1 to 10, one line each!"
                 prompt += f"#Questions:"
                 qi = gpt(K8S_QI, prompt, "gpt-3.5-turbo")
-
+              
                 qis = [x.strip() for x in qi.strip().split("\n") if x.strip() != ""]
                 qis = [x for x in qis if not x.startswith("#")]
                 qis = [x.strip() for x in qis if not x.endswith(":")]
