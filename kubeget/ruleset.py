@@ -259,7 +259,8 @@ class RuleSet:
         desc = RuleSub(desc)
         code = RuleSub(code)
 
-        sub_key = hash((desc.text.tobytes(), code.text.tobytes())) # The masks are still empty
+         # The masks are still empty
+        sub_key = (desc.text.tobytes(), code.text.tobytes())
 
         if sub_key not in RuleSet.mem:
             RuleSet.mem[sub_key] = [
@@ -269,12 +270,7 @@ class RuleSet:
             ]
 
         matching_rules = RuleSet.mem[sub_key]
-        # matching_rules =  [
-        #         (match[1], rule, match[2], match[3])
-        #         for rule, match in zip(self.rules, map(lambda rule: rule.match(desc, code, namespace), self.rules))
-        #         if match
-        #     ]
-        # print(f'# From\nDescription: {desc.highlight()}\nCode: {code.highlight()}\n')
+        
         sub_order = 0
         while matching_rules:
             sub_order += 1
