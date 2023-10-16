@@ -4,8 +4,10 @@ from tqdm import tqdm
 
 import random
 import json
-import re
 import hashlib
+import re
+import array
+
 
 from multiprocessing import Pool
 import multiprocessing
@@ -169,28 +171,16 @@ class ListMatcher(Matcher):
 
 class RuleSub:
     mem = dict()
-    SEP = "űáű"
+    SEP_STR = "űáű"
+    SEP = array.array('i', [ord(c) for c in SEP_STR])
 
     def __init__(self, text):
-        self.text = list(text)
-        self.mask = [0] * len(text)
+        self.text = array.array('u')
+        self.text.fromunicode(text)
+        self.mask = array.array('i', [0] * len(text))
 
     def show(self):
-        return "".join(self.text)
-
-    @staticmethod
-    @lru_cache(maxsize = None, typed = False)
-    def get_str_cached(text, mask):
-        sep = "űáű"
-
-        return "".join(
-            [
-                curr_char if curr == 0 else sep
-                for ((curr, next), curr_char) in zip(pairwise(mask), text)
-                if curr == 0 or next == 0
-            ]
-            + ([text[-1]] if mask[-1] == 0 else [])
-        )
+        return self.text.tounicode()
 
     def get_str(self):
         key = (self.text.tobytes(), self.mask.tobytes())
@@ -198,16 +188,17 @@ class RuleSub:
         if key not in RuleSub.mem:
             RuleSub.mem[key] = "".join(
                 [
-                    curr_char if curr == 0 else RuleSub.SEP
+                    curr_char if curr == 0 else RuleSub.SEP_STR
                     for ((curr, next), curr_char) in zip(pairwise(self.mask), self.text)
                     if curr == 0 or next == 0
                 ]
                 + ([self.text[-1]] if self.mask[-1] == 0 else [])
             )
+
         return RuleSub.mem[key]
 
     def highlight(self):
-        return color_text_with_mask("".join(self.text), self.mask)
+        return color_text_with_mask(self.text.tounicode(), self.mask)
 
 class Rule:
     def __init__(self, rule: str, values):
@@ -335,13 +326,15 @@ class RuleSet:
                 sub_text = matcher.sub(text_str, new_val)
                 sub_text.sort(key=lambda x: -x[0])
 
-                for start, length, value in sub_text:
+                for start, length, _value in sub_text:
                     start += shift_sep_mask_text[start]
                     start += shift_mask_text[start]
+                    value = array.array('u')
+                    value.fromunicode(_value)
 
                     rulesub.text = (
                         rulesub.text[:start]
-                        + list(value)
+                        + value
                         + rulesub.text[start + length :]
                     )
                     # middle = rulesub.mask[start : start + length]
@@ -349,7 +342,7 @@ class RuleSet:
                     #     raise RuntimeError("writing restricted characters")
                     rulesub.mask = (
                         rulesub.mask[:start]
-                        + [sub_order] * len(value)
+                        + array.array('i', [sub_order] * len(value))
                         + rulesub.mask[start + length :]
                     )
 
