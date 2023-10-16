@@ -1,29 +1,33 @@
 #!/usr/bin/env python3
 import json
 import argparse
+import multiprocessing
+from benchmark import Benchmarks, benchmark
 
-from augment import gen_cot, gen_qi, gen_params
-from ops import flatten_and_split, upload
+from augment import gen_cot, gen_qi
+from network import upload
 from scrape import parse_kubectl
 from config import HUGGINGFACE_DATASET_REPO
 from ruleset import ruleset_expand
+from utils import load_json
 
 def main(args):
     
     if args.file:
-        with open(args.file, 'r') as file:
-            json_data = json.load(file)
-
+        json_data = load_json(args.file)
         train_dataset, validate_dataset = json_data['train'], json_data['validate']
-    elif args.generate:
+    else:
         dataset = parse_kubectl()
-        dataset = ruleset_expand(dataset, 30000)
-        return
-        dataset = gen_cot(dataset)
+        
+
+    if args.ruleset:
+        dataset = ruleset_expand(dataset, args.size or len(dataset))
+    if args.questions:
         dataset = gen_qi(dataset)
 
-        (train_dataset, validate_dataset) = flatten_and_split(dataset)
-    
+    if args.cot:
+        dataset = gen_cot(dataset)
+
     if args.upload:
         upload(train_dataset, validate_dataset)
     elif args.dump:
@@ -31,22 +35,29 @@ def main(args):
             json.dump({'train': train_dataset, 'validate': validate_dataset}, file)
 
 if __name__ == '__main__':
-    def is_valid_json_file(arg):
-        try:
-            with open(arg, 'r') as file:
-                json.load(file)
-            return arg
-        except (FileNotFoundError, json.JSONDecodeError):
-            raise argparse.ArgumentTypeError(f"'{arg}' is not a valid JSON file")
-
     parser = argparse.ArgumentParser(description='Kubectl dataset generator.')
-    group_in = parser.add_mutually_exclusive_group()
-    group_in.add_argument('-f', '--file', type=is_valid_json_file, help='Specify a valid JSON file')
-    group_in.add_argument('-g', '--generate', action='store_true', help='Generate data')
-    group_out = parser.add_mutually_exclusive_group()
-    group_out.add_argument('-u', '--upload', action='store_true', help='Upload data')
-    group_out.add_argument('-d', '--dump', help='Upload data')
+    
+    parser.add_argument('-f', '--file', help='Specify a JSON file instead of generating the data.')
+
+    parser.add_argument('-u', '--upload', action='store_true', help='Upload data')
+    parser.add_argument('-d', '--dump', help='Upload data')
+
+    parser.add_argument('-r', '--ruleset', action='store_true', help="Augment the dataset with additional questions based on substitution rules")
+    parser.add_argument('-c', '--cot', action='store_true', help="Augment the dataset with a chain of thought column")
+    parser.add_argument('-q', '--questions', action='store_true', help="Augment the dataset with additional questions")
+    
+    parser.add_argument('-s', '--size', type=int, help="Set the number of lines in the final dataset")
 
     args = parser.parse_args()
 
+    if args.size and not args.ruleset:
+        parser.error("The size argument is only valid if the ruleset argument is specified.")
+
+    args = parser.parse_args()
     main(args)
+  
+    bench = Benchmarks()
+    for fn, data in bench.items():
+        total = data['total']
+        n = data['n']
+        print(f'{fn}: Total: {total}, Called: {n} --- {1000*total/n:.6f}ms/it')

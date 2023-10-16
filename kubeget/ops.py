@@ -67,10 +67,3 @@ def flatten_and_split(dataset):
               pbar.update(1)
 
     return (train_dataset, validate_dataset)
-
-def upload(train_dataset, validate_dataset):
-    ddict = DatasetDict({
-        "train": Dataset.from_list(train_dataset),
-        "validate": Dataset.from_list(validate_dataset),
-    })
-    ddict.push_to_hub(HUGGINGFACE_DATASET_REPO)
