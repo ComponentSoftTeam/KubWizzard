@@ -8,7 +8,7 @@ import array
 from multiprocessing import Pool
 import multiprocessing
 
-from itertools import pairwise, count, takewhile
+from itertools import pairwise, count, takewhile, accumulate
 from benchmark import benchmark
 
 from config import RULESET
@@ -149,6 +149,7 @@ class RuleSub:
     mem = dict()
     SEP_STR = "űáű"
     SEP = array.array("i", [ord(c) for c in SEP_STR])
+    SEP_LEN = len(SEP_STR)
 
     def __init__(self, text):
         self.text = array.array("u")
@@ -220,7 +221,6 @@ class Rule:
         self.desc_matcher = Matcher.create(desc_rule)
         self.code_matcher = Matcher.create(code_rule)
 
-    @benchmark
     def match(self, desc, code, namespace=None):
         if not self.is_global and namespace != self.namespace:
             return None
@@ -272,72 +272,61 @@ class RuleSet:
             _, rule, matcher_desc, matcher_code = max(matching_rules, key=lambda x: x[0])
             new_val_desc, new_val_code = random.choice(rule.values)
 
-            for rulesub, matcher, new_val in [
+            for text_obj, matcher, new_val in [
                 (desc, matcher_desc, new_val_desc),
                 (code, matcher_code, new_val_code),
             ]:
-                n = len(rulesub.text)
-                text_str:str = rulesub.get_str()
-                shift_sep_mask_text = [0] * len(text_str)
+                text_obj_len = len(text_obj.text)
 
-                for i in range(len(shift_sep_mask_text) - len(RuleSub.SEP_STR)):
-                    if text_str.startswith(RuleSub.SEP_STR, i):
-                        shift_sep_mask_text[i] = -len(RuleSub.SEP_STR)
+                text_str:str = text_obj.get_str()
+                text_str_len:int = len(text_str)
 
-                for i in range(1, len(shift_sep_mask_text)):
-                    shift_sep_mask_text[i] += shift_sep_mask_text[i - 1]
+                shift_sep_mask_text = array.array('i', [0] * text_str_len)
+                for i in (match.start() for match in re.finditer(RuleSub.SEP_STR, text_str)):
+                    shift_sep_mask_text[i] = -RuleSub.SEP_LEN 
 
-                shift_mask_text = [0] * n
+                shift_sep_mask_text = array.array('i', accumulate(shift_sep_mask_text))
+
+                shift_mask_text = [0] * text_obj_len
                 i = 0
-                while i < n:
-                    while i < n and rulesub.mask[i] == 0:
-                        i += 1
-                    if i == n:
-                        break
+                while i < text_obj_len:
+                    next_original = next((j for j, m in enumerate(text_obj.mask[i:], start=i) if m != 0), None)
+                    if next_original == None: break;
 
-                    offset = 0
-                    while i + offset < n and rulesub.mask[i + offset] != 0:
-                        offset += 1
+                    i = next((j for j, m in enumerate(text_obj.mask[next_original:], start=next_original) if m == 0), None)
+                    if i == None: break;
+                    
+                    shift_mask_text[i] = i - next_original
 
-                    shift_mask_text[i] = offset
+                shift_mask_text = accumulate(shift_mask_text)
 
-                    i += offset
-
-                for i in range(1, n):
-                    shift_mask_text[i] += shift_mask_text[i - 1]
-
-                shift_mask_text = [m for m, b in zip(shift_mask_text, rulesub.mask) if b == 0]
+                shift_mask_text = [m for m, b in zip(shift_mask_text, text_obj.mask) if b == 0]
                 sub_text = matcher.sub(text_str, new_val)
-                sub_text.sort(key=lambda x: -x[0])
+                sub_text.reverse()
 
-                for start, length, _value in sub_text:
+                for start, length, value in sub_text:
                     start += shift_sep_mask_text[start]
                     start += shift_mask_text[start]
-                    value = array.array("u")
-                    value.fromunicode(_value)
-
-                    rulesub.text = rulesub.text[:start] + value + rulesub.text[start + length :]
-                    middle = rulesub.mask[start : start + length]
-                    if any(x != 0 for x in middle):
-                        raise RuntimeError("writing restricted characters")
-                    rulesub.mask = (
-                        rulesub.mask[:start]
+                    
+                    text_obj.text = text_obj.text[:start] + array.array("u", value) + text_obj.text[start + length :]
+                    
+                    text_obj.mask = (
+                        text_obj.mask[:start]
                         + array.array("i", [sub_order] * len(value))
-                        + rulesub.mask[start + length :]
+                        + text_obj.mask[start + length :]
                     )
 
-            rules = (rule for (_, rule, _, _) in matching_rules)
-
+            
+            rules = [rule[1] for rule in matching_rules]
             matching_rules = [
                 (match[0], rule, match[1], match[2])
                 for rule, match in zip(
-                    self.rules,
+                    rules,
                     map(lambda rule: rule.match(desc, code, namespace), rules),
                 )
                 if match
             ]
 
-        # print(f'# Expanded to \nDescription: {desc.highlight()}\nCode: {code.highlight()}\n\n')
         return (desc.show(), code.show())
 
 
@@ -390,69 +379,72 @@ def ruleset_expand(dataset, size):
         leave=True,
         desc="Ruleset expand",
     ) as pbar:
-        # extended_dataset = dataset
-        # with Pool(multiprocessing.cpu_count()) as pool:
-        #     futures = pool.map_async(do_batch, [(extended_dataset, ruleset)] * 16)
-        #     while len(result_dataset) < size:
-        #         results_list = []
+        
+        extended_dataset = dataset * 8
 
-        #         @benchmark
-        #         def waiting():
-        #             nonlocal results_list
-        #             results_list = futures.get()
-        #         waiting()
+        N = multiprocessing.cpu_count()
+        with Pool(N) as pool:
+            futures = pool.map_async(do_batch, [(extended_dataset, ruleset)] * N)
+            while len(result_dataset) < size:
+                results_list = []
 
-        #         futures = pool.map_async(do_batch, [(extended_dataset, ruleset)] * 16)
-        #         @benchmark
-        #         def process_results():
-        #             nonlocal total
-        #             for results, hashes in results_list:
-        #                 total += len(results)
-        #                 for result, h in zip(results, hashes):
-        #                     if len(result_dataset) < size and h not in result_hashes:
-        #                         result_dataset.append(result)
-        #                         result_hashes.add(h)
-        #                         pbar.update(1)
-        #         process_results()
-        #     futures.wait(0)
+                @benchmark
+                def waiting():
+                    nonlocal results_list
+                    results_list = futures.get()
+                waiting()
+
+                futures = pool.map_async(do_batch, [(extended_dataset, ruleset)] * N * 4)
+                @benchmark
+                def process_results():
+                    nonlocal total
+                    for results, hashes in results_list:
+                        total += len(results)
+                        for result, h in zip(results, hashes):
+                            if len(result_dataset) < size and h not in result_hashes:
+                                result_dataset.append(result)
+                                result_hashes.add(h)
+                                pbar.update(1)
+                process_results()
+            futures.wait(0)
         # Sigle threaded:
 
-        def do(data):
-            data = dict(data)
-            data["example_description"], data["example_code"] = ruleset.expand(
-                data["example_description"],
-                data["example_code"],
-                data["command"].strip(),
-            )
-            data_hash = hash((data["command"], data["example_description"], data["example_code"]))
-            return data, data_hash
+        # def do(data):
+        #     data = dict(data)
+        #     data["example_description"], data["example_code"] = ruleset.expand(
+        #         data["example_description"],
+        #         data["example_code"],
+        #         data["command"].strip(),
+        #     )
+        #     data_hash = hash((data["command"], data["example_description"], data["example_code"]))
+        #     return data, data_hash
 
-        while len(result_dataset) < size:
-            for data in dataset:
-                command = data["command"]
-                description = data["description"]
-                syntax = data["syntax"]
-                flags = data["flags"]
-                examples = data["examples"]
+        # while len(result_dataset) < size:
+        #     for data in dataset:
+        #         command = data["command"]
+        #         description = data["description"]
+        #         syntax = data["syntax"]
+        #         flags = data["flags"]
+        #         examples = data["examples"]
 
-                for example in examples:
-                    example_description = example["description"]
-                    example_code = example["code"]
+        #         for example in examples:
+        #             example_description = example["description"]
+        #             example_code = example["code"]
 
-                    entry, entry_hash = do(
-                        {
-                            "example_description": example_description,
-                            "example_code": example_code,
-                            "command": command,
-                            "description": description,
-                            "syntax": syntax,
-                            "flags": flags,
-                        }
-                    )
+        #             entry, entry_hash = do(
+        #                 {
+        #                     "example_description": example_description,
+        #                     "example_code": example_code,
+        #                     "command": command,
+        #                     "description": description,
+        #                     "syntax": syntax,
+        #                     "flags": flags,
+        #                 }
+        #             )
 
-                    if entry_hash not in result_hashes and len(result_dataset) < size:
-                        result_hashes.add(entry_hash)
-                        result_dataset.append(entry)
-                        pbar.update(1)
+        #             if entry_hash not in result_hashes and len(result_dataset) < size:
+        #                 result_hashes.add(entry_hash)
+        #                 result_dataset.append(entry)
+        #                 pbar.update(1)
 
     return result_dataset
