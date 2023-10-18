@@ -1793,11 +1793,11 @@
       "c-sub": "data-sync"
     },
     {
-      "d-sub": "",
+      "d-sub": "alerts-cleanup",
       "c-sub": "alerts-cleanup"
     },
     {
-      "d-sub": "",
+      "d-sub": "cron-task",
       "c-sub": "cron-task"
     }
   ],
@@ -2315,7 +2315,7 @@
       "c-sub": "--verb=use --verb=delete --verb=connect"
     }
   ],
-  "$role#|:verb=get": [
+  "$role#:verb=get": [
     {
       "d-sub": "",
       "c-sub": "verb=get"
@@ -6407,7 +6407,7 @@
       "c-sub": "analytics-platform-deployment"
     }
   ],
-  "$kustomize:/home/config/production": [
+  "$kustomize#:/home/config/production": [
     {
       "d-sub": "",
       "c-sub": "/home/config/production"
@@ -6623,7 +6623,7 @@
       "c-sub": "conf.json"
     }
   ],
-  "$label#|:bar": [
+  "$label#:bar": [
     {
       "d-sub": "",
       "c-sub": "unhealthy"
@@ -6735,7 +6735,7 @@
       "c-sub": "chat-app-pod"
     }
   ],
-  "$patch#:'{\"spec\":{\"unschedulable\":true}}'": [
+  "$patch#:'{\"spec\"\\:{\"unschedulable\"\\:true}}'": [
     {
       "d-sub": "",
       "c-sub": "'{\"spec\":{\"unschedulable\":true}}'"
@@ -6769,7 +6769,7 @@
       "c-sub": "'{\"spec\":{\"someField\":\"newValue\"}'"
     }
   ],
-  "$patch#:$'spec:\\n unschedulable: true'": [
+  "$patch#:$'spec\\:\\n unschedulable\\: true'": [
     {
       "d-sub": "",
       "c-sub": "$'spec:\\n unschedulable: true'"
@@ -7425,7 +7425,7 @@
       "c-sub": "7"
     }
   ],
-  "$scale#2|3|:2|3|": [
+  "$scale#2|3|:2|3": [
     {
       "d-sub": "1",
       "c-sub": "1"
@@ -8191,7 +8191,7 @@
       "c-sub": "[amazonlinux,amazonlinux,amazonlinux:2]"
     }
   ],
-  "$image#nginx\\:1.9.1|:[nginx: nginx\\:1.9.1]": [
+  "$image#nginx\\:1.9.1|:[nginx\\: nginx\\:1.9.1]": [
     {
       "d-sub": "nginx:1.21.3",
       "c-sub": "[nginx, nginx:1.21.3]"
@@ -11375,7 +11375,7 @@
       "c-sub": "analytics-service"
     }
   ],
-  "$proxy#8011|8011": [
+  "$proxy#8011:8011": [
     {
       "d-sub": "8080",
       "c-sub": "8080"
