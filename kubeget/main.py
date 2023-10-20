@@ -1,38 +1,38 @@
 #!/usr/bin/env python3
-import json
 import argparse
-import multiprocessing
-from benchmark import Benchmarks, benchmark
+from benchmark import Benchmarks
 
-from augment import gen_cot, gen_qi
+from augment import generate_chain_of_thought, generate_instructions
+from dataset import Dataset
 from network import upload
+from sampler import sample
 from scrape import parse_kubectl
 from config import HUGGINGFACE_DATASET_REPO
 from ruleset import ruleset_expand
-from utils import load_json
 
 def main(args):
-    
+    base_dataset = dataset = parse_kubectl()
     if args.file:
-        json_data = load_json(args.file)
-        train_dataset, validate_dataset = json_data['train'], json_data['validate']
-    else:
-        dataset = parse_kubectl()
+        dataset = Dataset()
+        dataset.load(args.file)
         
+    if args.expand:
+        dataset = ruleset_expand(base_dataset, args)
+    
+    if args.sample:
+        dataset = sample(dataset, base_dataset, args)
 
-    if args.ruleset:
-        dataset = ruleset_expand(dataset, args.size or len(dataset))
     if args.questions:
-        dataset = gen_qi(dataset)
+        dataset = generate_instructions(dataset)
 
     if args.cot:
-        dataset = gen_cot(dataset)
+        dataset = generate_chain_of_thought(dataset)
 
-    if args.upload:
-        upload(train_dataset, validate_dataset)
-    elif args.dump:
-        with open(args.dump, 'w') as file:
-            json.dump({'train': train_dataset, 'validate': validate_dataset}, file)
+
+    # if args.upload:
+    #     upload(train_dataset, validate_dataset)
+    if args.dump:
+        dataset.dump(args.dump)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Kubectl dataset generator.')
@@ -42,16 +42,20 @@ if __name__ == '__main__':
     parser.add_argument('-u', '--upload', action='store_true', help='Upload data')
     parser.add_argument('-d', '--dump', help='Upload data')
 
-    parser.add_argument('-r', '--ruleset', action='store_true', help="Augment the dataset with additional questions based on substitution rules")
     parser.add_argument('-c', '--cot', action='store_true', help="Augment the dataset with a chain of thought column")
     parser.add_argument('-q', '--questions', action='store_true', help="Augment the dataset with additional questions")
-    
-    parser.add_argument('-s', '--size', type=int, help="Set the number of lines in the final dataset")
+
+    parser.add_argument('-e', '--expand', type=int, help="Set the number of lines to expand to with substitution rules")
+    parser.add_argument('-s', '--sample', type=int, help="Set the number of lines to get after sampling, based on entropy")
+
+    parser.add_argument('-p', '--plot', action='store_true', help="Plot the entropy distribution")
+    parser.add_argument('-v', '--verbose', action='store_true', help="Print verbose information")
 
     args = parser.parse_args()
 
-    if args.size and not args.ruleset:
-        parser.error("The size argument is only valid if the ruleset argument is specified.")
+    # upload or dump must be specified
+    if not args.upload and not args.dump:
+        parser.error("Either the upload or the dump argument must be specified.")
 
     args = parser.parse_args()
     main(args)

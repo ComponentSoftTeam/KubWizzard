@@ -6,6 +6,7 @@ __pycache__/**
 
 *.json
 !ruleset.json
+!questions.json
 
 *.out
 perf.*

@@ -1,0 +1,116 @@
+{
+  "examples": [
+    {
+      "general": "get pods with label",
+      "instruction": "list all pods in the webserver namespace",
+      "command": "kubectl get pods -n webserver",
+      "specific": true,
+      "chain_of_thought": "1. use the get subcommand to list resources\n2. specify the type of the resource as pod\n3. use the -n flag to specify the namespace as webserver"
+    },
+    {
+      "general": "create a resource from a yaml file",
+      "instruction": "create a deployment out of the depl.yaml file",
+      "command": "kubectl create -f depl.yaml",
+      "specific": true,
+      "chain_of_thought": "1. use the create subcommand to create a resource\n2. with the -f flag specify to use the depl.ymal file"
+    },
+    {
+      "general": "get logs of a resource",
+      "instruction": "show the logs of a pod",
+      "command": "kubectl logs example-pod",
+      "specific": false,
+      "chain_of_thought": "1. use the logs subcommand to get the logs of a resource, the default is pod\n2. specify the name of the pod as example-pod"
+    },
+    {
+      "general": "delete a resource",
+      "instruction": "remove the 'reverse-proxy' service",
+      "command": "kubectl delete service reverse-proxy",
+      "specific": true,
+      "chain_of_thought": "1. use the delete subcommand to delete a resource\n2. specify the type of the resource as service\n3. specify the name of the service as reverse-proxy"
+    },
+    {
+      "general": "forward the 443 port to a pods 8080 port inside a namespace",
+      "instruction": "forward the http trafic to the 'frontend' pods 8080 port in the web namespace",
+      "command": "kubectl port-forward frontend 443:8080 -n web",
+      "specific": true,
+      "chain_of_thought": "1. use the port-forward subcommand to forward a port, pod is the default resource type\n2. specify the name of the pod as frontend\n3. with 443:8080 route the incoming trafic on 443 to the inner 8080 port\n4. with the -n set the namespace to web"
+    },
+    {
+      "general": "apply an update to a deployment",
+      "instruction": "apply a rolling update to the mailserver deployment with a new alphine based image, in production",
+      "command": "kubectl set image deployment/mailserver app-container=alphine:2.0 -n production",
+      "specific": true,
+      "chain_of_thought": "1. use the set image subcommand to change the image of a resource\n2. specify the type of the resource as deployment\n3. specify the name of the deployment as mailserver\n4. specify the name of the container as app-container\n5. specify the new image as alphine:2.0\n6. with the -n flag set the namespace to production"
+    },
+    {
+      "general": "generate a secret from hardcoded values",
+      "instruction": "create a secret from some literal values",
+      "command": "kubectl create secret generic my-secret --from-literal=username=admin --from-literal=password=secretpass -n myapp-namespace",
+      "specific": false,
+      "chain_of_thought": "1. use the create secret subcommand to create a secret\n2. select the secret type as generic\n3. name the secret as my-secret\n4. with the --from-literal flag specify the username=admin and password=secretpass literals\n5. with the -n flag set the namespace to myapp-namespace"
+    },
+    {
+      "general": "show the pods in a namespace with a given label",
+      "instruction": "list the pods with the gpu=rtx1080 label in the dev namespace",
+      "command": "kubectl get pods -n dev -l gpu=rtx1080",
+      "specific": true,
+      "chain_of_thought": "1. use the get subcommand to list resources\n2. specify the type of the resource as pod\n3. with the -n flag set the namespace to dev\n4. with the -l flag filter the pods by the gpu=rtx1080 label"
+    },
+    {
+      "general": "give detailed information of a resource",
+      "instruction": "give more information of the worker-node-13 node",
+      "command": "kubectl describe node worker-node-13",
+      "specific": true,
+      "chain_of_thought": "1. use the describe subcommand to get detailed information of a resource\n2. specify the type of the resource as node\n3. specify the name of the node as worker-node-13"
+    },
+    {
+      "general": "configure scaling for a deployment based on some metric",
+      "instruction": "setup scaling of a deployment based on cpu utilization",
+      "command": "kubectl autoscale deployment my-app-deployment --cpu-percent=50 --min=3 --max=10 -n production",
+      "specific": false,
+      "chain_of_thought": "1. use the autoscale subcommand to setup autoscaling for a resource\n2. specify the type of the resource as deployment\n3. specify the name of the deployment as my-app-deployment\n4. with --cpu-percent 50% set the scaling to aim to keep the cpu usage at 50%\n5. with the --min flag set the minimum number of replicas to 3\n6. with the --max flag set the maximum number of replicas to 10\n7. with the -n flag set the namespace to production"
+    },
+    {
+      "general": "get resource usage of a resource",
+      "instruction": "print the resource usage of the plex pod",
+      "command": "kubectl top pod plex",
+      "specific": true,
+      "chain_of_thought": "1. use the top subcommand to get the resource usage of a resource\n2. specify the type of the resource as pod\n3. specify the name of the pod as plex"
+    },
+    {
+      "general": "execute a command inside a container",
+      "instruction": "launch an iteractive shell in an ubuntu container in the testing namespace",
+      "command": "kubectl exec -n testing -c ubuntu -it tester-pod -- /bin/sh",
+      "specific": true,
+      "chain_of_thought": "1. use the exec subcommand to execute a command inside a container\n2. with the -n flag set the namespace to testing\n3. with the -c flag specify the name of the container as ubuntu\n4. with the -it flags set the session to interactive\n5. specify the name of the pod as tester-pod\n6. with the -- flag specify the command to execute as /bin/sh"
+    },
+    {
+      "general": "list the pods in a given namespace",
+      "instruction": "get pods in namespace",
+      "command": "kubectl get pods -n your-namespace", 
+      "specific": false,
+      "chain_of_thought": "1. use the get subcommand to list resources\n2. specify the type of the resource as pod\n3. with the -n flag set the namespace to your-namespace"
+    },
+    {
+      "general": "get the logs of a pod",
+      "instruction": "read the logs of pods",
+      "command": "kubectl logs your-pod",
+      "specific": false,  
+      "chain_of_thought": "1. use the logs subcommand to get the logs of a resource, the default is pod\n2. specify the name of the pod as your-pod"
+    },
+    {
+      "general": "check the status of a resource during a rollout",
+      "instruction": "check the status of a rolling update",
+      "command": "kubectl rollout status deployment/your-deployment -n your-namespace",
+      "specific": false,
+      "chain_of_thought": "1. use the rollout status subcommand to check the status of a rolling update\n2. specify the type of the resource as deployment\n3. specify the name of the deployment as your-deployment\n4. with the -n flag set the namespace to your-namespace"
+    },
+    {
+      "general": "show detailed information of a resource",
+      "instruction": "view the detailed config of a service",
+      "command": "kubectl describe service your-service",
+      "specific": false,
+      "chain_of_thought": "1. use the describe subcommand to get detailed information of a resource\n2. specify the type of the resource as service\n3. specify the name of the service as your-service"
+    }
+  ]
+}
