@@ -3,6 +3,7 @@ from tqdm import tqdm
 
 import requests
 import time
+from dataset import Dataset, Entry
 
 from utils import cached, get_unique_id
 
@@ -72,7 +73,7 @@ def parse_kubectl():
 
     soup = group_elements_by_h1(soup, bs)
 
-    dataset = []
+    dataset = Dataset()
     blocks = soup.select(f"div.{UNIQUE_MARKER}")
     for block in tqdm(blocks, leave=True, desc="kubectl scrape"):
         example_context = block.select("blockquote.example")
@@ -107,16 +108,19 @@ def parse_kubectl():
         else:
             flags = ""
 
-        command = block.select_one("h1").text.strip()
+        command_name = block.select_one("h1").text.strip()
 
-        dataset.append(
-            {
-                "command": command,
-                "description": description,
-                "syntax": syntax,
-                "examples": examples,
-                "flags": flags,
-            }
-        )
+        if examples:
+            dataset.add_entries([
+              Entry(
+                  objective=example["description"],
+                  command=example["code"],
+                  command_name=command_name,
+                  description=description,
+                  syntax=syntax,
+                  flags=flags
+              )
+              for example in examples
+            ])
 
     return dataset

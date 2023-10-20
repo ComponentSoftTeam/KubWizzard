@@ -6,7 +6,7 @@ from utils import cached
 
 @cached
 def gpt(system, prompt, model='gpt-3.5-turbo'):
-    for attempt in range(100):  
+    for _ in range(100):  
         try:
             response = openai.ChatCompletion.create(
                 model = model,
