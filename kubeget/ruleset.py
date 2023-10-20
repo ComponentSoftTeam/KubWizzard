@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from tqdm import tqdm
 
 import random
@@ -12,7 +13,7 @@ from itertools import pairwise, count, takewhile, accumulate
 from benchmark import benchmark
 
 from config import RULESET
-
+from dataset import Dataset, Entry
 
 class Matcher:
     def __init__(self, pattern):
@@ -41,8 +42,6 @@ class Matcher:
 
         return ExactMatcher(pattern)
 
-
-# Matching: ''
 class AnyMatcher(Matcher):
     """Matching rule(s): ''"""
 
@@ -54,9 +53,9 @@ class AnyMatcher(Matcher):
     def match(self, text):
         return (AnyMatcher.PRIO, self)
 
+
     def sub(self, text, new_val):
         return []
-
 
 class ExactMatcher(Matcher):
     """
@@ -68,14 +67,14 @@ class ExactMatcher(Matcher):
 
     def __init__(self, pattern):
         super().__init__(pattern)
+        self.re_pattern = re.compile(re.escape(pattern))
 
     def match(self, text):
         return (ExactMatcher.PRIO, self) if self.pattern in text else None
 
     def sub(self, text, new_val):
-        start_positions = (match.start() for match in re.finditer(self.pattern, text))
-        return [(s, len(self.pattern), new_val) for s in start_positions]
-
+        start_position = next((match.start() for match in self.re_pattern.finditer(text)))
+        return [(s, len(self.pattern), new_val) for s in [start_position]]
 
 class MultiMatcher(Matcher):
     """
@@ -91,15 +90,9 @@ class MultiMatcher(Matcher):
         self.matchers = [Matcher.create(p) for p in sub_patterns]
 
     def match(self, text):
-        # TODO(Kristofy): This does not check for overlapping words:
-        # so 'banana' with a pattern ana will match twice, but
-        # the two matching parts are overlapping in the middle 'a' string
-        # it is a rare case, so it's low priority
-
         match_results = (m.match(text) for m in self.matchers)
         matches = [m for m in match_results if m]
         return max(matches, key=lambda x: x[0]) if matches else None
-
 
 class ListMatcher(Matcher):
     """
@@ -113,10 +106,10 @@ class ListMatcher(Matcher):
         super().__init__(pattern)
 
         pattern = pattern[1:-1].strip()
-        self.sub_patterns = [p.strip() for p in pattern.split(",")]
+        self.re_sub_patterns = [(re.compile(re.escape(p.strip())), len(p.strip())) for p in pattern.split(",")]
 
     def match(self, text):
-        valid = ((m.start() for m in re.finditer(pattern, text)) for pattern in self.sub_patterns)
+        valid = ((m.start() for m in re_pattern.finditer(text)) for (re_pattern, _) in self.re_sub_patterns)
 
         latest = -1
         for start_indexes in valid:
@@ -127,12 +120,12 @@ class ListMatcher(Matcher):
         return (ListMatcher.PRIO, self)
 
     def sub(self, text, new_vals):
-        valid = ((m.start() for m in re.finditer(pattern, text)) for pattern in self.sub_patterns)
+        valid = ((m.start() for m in re_pattern.finditer(text)) for (re_pattern, _) in self.re_sub_patterns)
 
         latest = -1
         positions = []
 
-        # TODO(kristofy): this does not check for overlapping words in the sequence
+        # TODO(Kristofy): this does not check for overlapping words in the sequence
         # So [apple, lemma] in 'appbananalemma lemma' would both match in applemma instead
         # of the expected matching with the two separate words
         for start_indexes in valid:
@@ -142,8 +135,7 @@ class ListMatcher(Matcher):
             positions.append(latest)
 
         new_vals = (v.strip() for v in new_vals.strip()[1:-1].split(","))
-        return [(s, len(p), v) for s, p, v in zip(positions, self.sub_patterns, new_vals)]
-
+        return [(s, length, v) for s, (_, length), v in zip(positions, self.re_sub_patterns, new_vals)]
 
 class RuleSub:
     mem = dict()
@@ -193,7 +185,6 @@ class RuleSub:
             [f"{COLORS[color_index % n]}{char}{RESET_COLOR}" for char, color_index in zip(self.text, self.mask)]
         )
 
-
 class Rule:
     def __init__(self, rule: str, values):
         self.rule = rule
@@ -206,20 +197,39 @@ class Rule:
         self.namespace = None
         if not self.is_global:
             if "#" not in rule or len(rule.split("#")) != 2:
-                raise ValueError(f"Invalid rule {self.rule}")
+                raise ValueError(f"Invalid rule {self.rule}, no namespace separator, despite being a namespace rule")
 
             self.namespace, rule = rule.split("#")
             self.namespace = self.namespace.strip()
 
-        rule = rule.strip()
+        rule = rule.strip().replace("\\:", RuleSub.SEP_STR)
         if ":" not in rule or len(rule.split(":")) != 2:
-            raise ValueError(f"Invalid rule {self.rule}")
-
+            if ":" not in rule:
+                raise ValueError(f"Invalid rule {self.rule}, no separator")
+            else:
+                raise ValueError(f"Invalid rule {self.rule}, too many separators")
         desc_rule, code_rule = rule.split(":")
+        
+        desc_rule = desc_rule.strip().replace(RuleSub.SEP_STR, ":")
+        code_rule = code_rule.strip().replace(RuleSub.SEP_STR, ":")
 
         self.values = [(s["d-sub"], s["c-sub"]) for s in values]
         self.desc_matcher = Matcher.create(desc_rule)
         self.code_matcher = Matcher.create(code_rule)
+
+        if not isinstance(self.desc_matcher, AnyMatcher):
+            if any(d_sub.strip() == "" for (d_sub, _) in self.values):
+                raise ValueError(f"Invalid rule {self.rule}, empty description substitution")
+            
+        if not isinstance(self.code_matcher, AnyMatcher):
+            if any(c_sub.strip() == "" for (_, c_sub) in self.values):
+                raise ValueError(f"Invalid rule {self.rule}, empty code substitution")
+
+        # desc and code matcher cannot have both an any mathcer at the same time
+        desc_has_any = isinstance(self.desc_matcher, AnyMatcher) or (isinstance(self.desc_matcher, MultiMatcher) and any(isinstance(sub_matcher, AnyMatcher) for sub_matcher in self.desc_matcher.matchers) )
+        code_has_any = isinstance(self.code_matcher, AnyMatcher) or (isinstance(self.code_matcher, MultiMatcher) and any(isinstance(sub_matcher, AnyMatcher) for sub_matcher in self.code_matcher.matchers) )
+        if desc_has_any and code_has_any:
+            raise ValueError(f"Invalid rule {self.rule}, both description and code matcher has any as a rule")
 
     def match(self, desc, code, namespace=None):
         if not self.is_global and namespace != self.namespace:
@@ -240,14 +250,12 @@ class Rule:
         prio += prio_desc + prio_code
         return (prio, matcher_desc, matcher_code)
 
-
 class RuleSet:
     mem = dict()
 
     def __init__(self, ruleset_json):
         self.rules = [Rule(rule, sub) for (rule, sub) in ruleset_json.items()]
 
-    # @benchmark
     def expand(self, desc, code, namespace=""):
         desc = RuleSub(desc)
         code = RuleSub(code)
@@ -255,7 +263,7 @@ class RuleSet:
         # The masks are still empty
         sub_key = (desc.text.tobytes(), code.text.tobytes())
 
-        # Ceching based on only the text, because at the beginning the mask is always empty
+        # Caching based on only the text, because at the beginning the mask is always empty
         if sub_key not in RuleSet.mem:
             RuleSet.mem[sub_key] = [
                 (match[0], rule, match[1], match[2])
@@ -315,7 +323,7 @@ class RuleSet:
                         + array.array("i", [sub_order] * len(value))
                         + text_obj.mask[start + length :]
                     )
-
+            
             
             rules = [rule[1] for rule in matching_rules]
             matching_rules = [
@@ -328,123 +336,59 @@ class RuleSet:
             ]
 
         return (desc.show(), code.show())
+    
 
-
-def do_batch(dataset_ruleset):
+def do_batch(dataset_ruleset: Tuple[List[Entry], RuleSet]):
     dataset, ruleset = dataset_ruleset
-
-    expanded_dataset = [
-        (
-            ruleset.expand(example["description"], example["code"], data["command"].strip()),
-            (
-                data["command"],
-                data["description"],
-                data["syntax"],
-                data["flags"],
-            ),
-        )
-        for data in dataset
-        for example in data["examples"]
+    expensions = [ruleset.expand(entry.objective, entry.command, entry.command_name) for entry in dataset]
+    return [
+        Entry(
+            objective=objective,
+            command=command,
+            command_name=entry.command_name,
+            description=entry.description,
+            syntax=entry.syntax,
+            flags=entry.flags
+      ) for entry, (objective, command) in zip(dataset, expensions)
     ]
 
-    results = [
-        {
-            "example_description": expansion[0],
-            "example_code": expansion[1],
-            "command": command,
-            "description": desc,
-            "syntax": syntax,
-            "flags": flags,
-        }
-        for expansion, (command, desc, syntax, flags) in expanded_dataset
-    ]
-
-    hashes = [hash((data[0], expansion[0], expansion[1])) for expansion, data in expanded_dataset]
-
-    return results, hashes
-
-
-def ruleset_expand(dataset, size):
+def ruleset_expand(base_dataset, args):
     with open(RULESET, "r") as f:
         ruleset_json = json.load(f)
 
     ruleset = RuleSet(ruleset_json)
 
-    result_dataset = list()
-    result_hashes = set()
-
+    result_dataset = Dataset()
+    size = args.expand
     total = 0
     with tqdm(
         total=size,
         leave=True,
         desc="Ruleset expand",
     ) as pbar:
-        
-        extended_dataset = dataset * 8
-
+        extended_dataset = base_dataset.to_list() * 4
         N = multiprocessing.cpu_count()
         with Pool(N) as pool:
             futures = pool.map_async(do_batch, [(extended_dataset, ruleset)] * N)
             while len(result_dataset) < size:
-                results_list = []
-
-                @benchmark
-                def waiting():
-                    nonlocal results_list
-                    results_list = futures.get()
-                waiting()
-
-                futures = pool.map_async(do_batch, [(extended_dataset, ruleset)] * N * 4)
-                @benchmark
-                def process_results():
-                    nonlocal total
-                    for results, hashes in results_list:
-                        total += len(results)
-                        for result, h in zip(results, hashes):
-                            if len(result_dataset) < size and h not in result_hashes:
-                                result_dataset.append(result)
-                                result_hashes.add(h)
-                                pbar.update(1)
-                process_results()
+                results_list = futures.get()
+                futures = pool.map_async(do_batch, [(extended_dataset, ruleset)] * N * 2)
+                for results in results_list:
+                    total += len(results)
+                    remaining = max(size - len(result_dataset), 0)
+                    inserted = result_dataset.add_entries(results)
+                    pbar.update(min(inserted, remaining))
             futures.wait(0)
         # Sigle threaded:
 
-        # def do(data):
-        #     data = dict(data)
-        #     data["example_description"], data["example_code"] = ruleset.expand(
-        #         data["example_description"],
-        #         data["example_code"],
-        #         data["command"].strip(),
-        #     )
-        #     data_hash = hash((data["command"], data["example_description"], data["example_code"]))
-        #     return data, data_hash
-
         # while len(result_dataset) < size:
-        #     for data in dataset:
-        #         command = data["command"]
-        #         description = data["description"]
-        #         syntax = data["syntax"]
-        #         flags = data["flags"]
-        #         examples = data["examples"]
-
-        #         for example in examples:
-        #             example_description = example["description"]
-        #             example_code = example["code"]
-
-        #             entry, entry_hash = do(
-        #                 {
-        #                     "example_description": example_description,
-        #                     "example_code": example_code,
-        #                     "command": command,
-        #                     "description": description,
-        #                     "syntax": syntax,
-        #                     "flags": flags,
-        #                 }
-        #             )
-
-        #             if entry_hash not in result_hashes and len(result_dataset) < size:
-        #                 result_hashes.add(entry_hash)
-        #                 result_dataset.append(entry)
-        #                 pbar.update(1)
+        #     results = do_batch((extended_dataset, ruleset))
+        #     total += len(results)
+        #     remaining = max(size - len(result_dataset), 0)
+        #     inserted = result_dataset.add_entries(results)
+        #     pbar.update(min(inserted, remaining))
+   
+    if args.verbose:
+        print(f"Total: {total} tries")
 
     return result_dataset

@@ -4567,7 +4567,7 @@
       "c-sub": "conf.json"
     }
   ],
-  "$delete#dir/:dir/": [
+  "$delete#dir/:dir": [
     {
       "d-sub": "dir/",
       "c-sub": "dir/"
@@ -5393,50 +5393,50 @@
       "c-sub": "conf.json"
     }
   ],
-  "$annotate#[description, 'my-frontend']:description='my frontend'": [
+  "$annotate#[description, 'my frontend']|:description='my frontend'": [
     {
       "d-sub": "[description, 'Web server for marketing site']",
       "c-sub": "description='Web server for marketing site'"
     },
     {
-      "d-sub": "[team, 'frontend-team']",
-      "c-sub": "team='frontend-team'"
+      "d-sub": "[team, 'frontend team']",
+      "c-sub": "team='frontend team'"
     },
     {
-      "d-sub": "[owner, 'alice-smith']",
-      "c-sub": "owner='alice-smith'"
+      "d-sub": "[owner, 'alice smith']",
+      "c-sub": "owner='alice smith'"
     },
     {
-      "d-sub": "[env, 'staging']",
-      "c-sub": "env='staging'"
+      "d-sub": "[env, staging]",
+      "c-sub": "env=staging"
     },
     {
-      "d-sub": "[app-version, '2.5.1']",
-      "c-sub": "app-version='2.5.1'"
+      "d-sub": "[app-version, 2.5.1]",
+      "c-sub": "app-version=2.5.1"
     },
     {
-      "d-sub": "[last-deployment, '2023-03-15']",
-      "c-sub": "last-deployment='2023-03-15'"
+      "d-sub": "[last-deployment, 2023-03-15]",
+      "c-sub": "last-deployment=2023-03-15"
     },
     {
-      "d-sub": "[release-notes, 'https]",
+      "d-sub": "[release-notes, 'https://example.com/release-notes/v2.5.1']",
       "c-sub": "release-notes='https://example.com/release-notes/v2.5.1'"
     },
     {
-      "d-sub": "[contact-email, 'support@example.com']",
-      "c-sub": "contact-email='support@example.com'"
+      "d-sub": "[contact-email, support@example.com]",
+      "c-sub": "contact-email=support@example.com"
     },
     {
-      "d-sub": "[criticality, 'high']",
-      "c-sub": "criticality='high'"
+      "d-sub": "[criticality, high]",
+      "c-sub": "criticality=high"
     },
     {
-      "d-sub": "[compliance-level, 'PCI-DSS']",
-      "c-sub": "compliance-level='PCI-DSS'"
+      "d-sub": "[compliance-level, PCI-DSS]",
+      "c-sub": "compliance-level=PCI-DSS"
     },
     {
-      "d-sub": "[backup-strategy, 'daily-backups']",
-      "c-sub": "backup-strategy='daily-backups'"
+      "d-sub": "[backup-strategy, 'daily backups']",
+      "c-sub": "backup-strategy='daily backups'"
     },
     {
       "d-sub": "[SLA, '99.9% uptime']",
@@ -5447,32 +5447,32 @@
       "c-sub": "expiration-date='2024-12-31'"
     },
     {
-      "d-sub": "[git-repo, 'https]",
+      "d-sub": "[git-repo, 'https://github.com/example/my-app']",
       "c-sub": "git-repo='https://github.com/example/my-app'"
     },
     {
-      "d-sub": "[deployment-script, 'https]",
+      "d-sub": "[deployment-script, 'https://example.com/deploy.sh']",
       "c-sub": "deployment-script='https://example.com/deploy.sh'"
     },
     {
       "d-sub": "[security-scan-status, 'pass']",
-      "c-sub": "security-scan-status='pass'"
+      "c-sub": "security-scan-status=pass"
     },
     {
       "d-sub": "[scaling-policy, 'auto-horizontal-scaling']",
-      "c-sub": "scaling-policy='auto-horizontal-scaling'"
+      "c-sub": "scaling-policy=auto-horizontal-scaling"
     },
     {
       "d-sub": "[monitoring-tool, 'Prometheus']",
-      "c-sub": "monitoring-tool='Prometheus'"
+      "c-sub": "monitoring-tool=Prometheus"
     },
     {
       "d-sub": "[alert-email, 'alerts@example.com']",
-      "c-sub": "alert-email='alerts@example.com'"
+      "c-sub": "alert-email=alerts@example.com"
     },
     {
       "d-sub": "[custom-label, 'my-custom-value']",
-      "c-sub": "custom-label='my-custom-value'"
+      "c-sub": "custom-label=my-custom-value"
     }
   ],
   "$annotate#[description, 'my frontend running nginx']:description='my frontend running nginx'": [
@@ -7161,52 +7161,6 @@
       "c-sub": "7"
     }
   ],
-  "$history#nginx:nginx": [
-    {
-      "d-sub": "my-deployment",
-      "c-sub": "my-deployment"
-    },
-    {
-      "d-sub": "nginx",
-      "c-sub": "nginx"
-    },
-    {
-      "d-sub": "app-v2",
-      "c-sub": "app-v2"
-    },
-    {
-      "d-sub": "prod",
-      "c-sub": "prod"
-    },
-    {
-      "d-sub": "test",
-      "c-sub": "test"
-    },
-    {
-      "d-sub": "namespace-1",
-      "c-sub": "namespace-1"
-    },
-    {
-      "d-sub": "namespace-2",
-      "c-sub": "namespace-2"
-    },
-    {
-      "d-sub": "services",
-      "c-sub": "services"
-    },
-    {
-      "d-sub": "development",
-      "c-sub": "development"
-    },
-    {
-      "d-sub": "staging",
-      "c-sub": "staging"
-    },
-    {
-      "d-sub": "namespace-",
-      "c-sub": "namespace-3"
-    }
-  ],
   "$restart#:nginx|abc": [
     {
       "d-sub": "my-deployment",
@@ -7459,6 +7413,48 @@
       "c-sub": "7"
     }
   ],
+  "$scale#foo.yaml:foo.yaml": [
+    {
+      "d-sub": "pod.json",
+      "c-sub": "pod.json"
+    },
+    {
+      "d-sub": "settings.json",
+      "c-sub": "settings.json"
+    },
+    {
+      "d-sub": "options.yaml",
+      "c-sub": "options.yaml"
+    },
+    {
+      "d-sub": "params.json",
+      "c-sub": "params.json"
+    },
+    {
+      "d-sub": "parameters.yaml",
+      "c-sub": "parameters.yaml"
+    },
+    {
+      "d-sub": "docker-registry.yaml",
+      "c-sub": "docker-registry.yaml"
+    },
+    {
+      "d-sub": "setup.json",
+      "c-sub": "setup.json"
+    },
+    {
+      "d-sub": "preferences.yaml",
+      "c-sub": "preferences.yaml"
+    },
+    {
+      "d-sub": "config.json",
+      "c-sub": "config.json"
+    },
+    {
+      "d-sub": "conf.json",
+      "c-sub": "conf.json"
+    }
+  ],
   "$scale#foo|mysql:foo|mysql|bar|baz|web": [
     {
       "d-sub": "foo",
@@ -7521,49 +7517,7 @@
       "c-sub": "db-migration-replicaset"
     }
   ],
-  "$scale#foo.yaml:foo.yaml": [
-    {
-      "d-sub": "pod.json",
-      "c-sub": "pod.json"
-    },
-    {
-      "d-sub": "settings.json",
-      "c-sub": "settings.json"
-    },
-    {
-      "d-sub": "options.yaml",
-      "c-sub": "options.yaml"
-    },
-    {
-      "d-sub": "params.json",
-      "c-sub": "params.json"
-    },
-    {
-      "d-sub": "parameters.yaml",
-      "c-sub": "parameters.yaml"
-    },
-    {
-      "d-sub": "docker-registry.yaml",
-      "c-sub": "docker-registry.yaml"
-    },
-    {
-      "d-sub": "setup.json",
-      "c-sub": "setup.json"
-    },
-    {
-      "d-sub": "preferences.yaml",
-      "c-sub": "preferences.yaml"
-    },
-    {
-      "d-sub": "config.json",
-      "c-sub": "config.json"
-    },
-    {
-      "d-sub": "conf.json",
-      "c-sub": "conf.json"
-    }
-  ],
-  "$env#registry|sample-build|:registry|sample-build|myapp": [
+  "$env#registry|sample-build|:registry|sample-build": [
     {
       "d-sub": "mydeployment",
       "c-sub": "mydeployment"
@@ -8191,7 +8145,7 @@
       "c-sub": "[amazonlinux,amazonlinux,amazonlinux:2]"
     }
   ],
-  "$image#nginx\\:1.9.1|:[nginx\\: nginx\\:1.9.1]": [
+  "$image#nginx\\:1.9.1|:[nginx, nginx\\:1.9.1]": [
     {
       "d-sub": "nginx:1.21.3",
       "c-sub": "[nginx, nginx:1.21.3]"
@@ -8389,7 +8343,7 @@
       "c-sub": "namespace-3"
     }
   ],
-  "$image#200m:200m": [
+  "$resources#200m:200m": [
     {
       "d-sub": "50m",
       "c-sub": "50m"
@@ -8427,7 +8381,7 @@
       "c-sub": "10"
     }
   ],
-  "$image#512Mi:512Mi": [
+  "$resources#512Mi:512Mi": [
     {
       "d-sub": "64Mi",
       "c-sub": "64Mi"
@@ -8543,7 +8497,7 @@
       "c-sub": "go"
     }
   ],
-  "$image#100m:100m": [
+  "$resources#100m|:100m": [
     {
       "d-sub": "50m",
       "c-sub": "50m"
@@ -8581,7 +8535,7 @@
       "c-sub": "10"
     }
   ],
-  "$image#256Mi:256Mi": [
+  "$resources#256Mi|:256Mi": [
     {
       "d-sub": "64Mi",
       "c-sub": "64Mi"
@@ -8891,7 +8845,7 @@
       "c-sub": "tekton"
     }
   ],
-  "$replace#busybox1:busybox1": [
+  "$wait#busybox1:busybox1": [
     {
       "d-sub": "mypod",
       "c-sub": "mypod"
@@ -8975,12 +8929,6 @@
     {
       "d-sub": "chat-app-pod",
       "c-sub": "chat-app-pod"
-    }
-  ],
-  "$wait#:\\n": [
-    {
-      "d-sub": "",
-      "c-sub": " && "
     }
   ],
   "$attach#mypod:mypod": [
@@ -9959,7 +9907,7 @@
       "c-sub": "feature=feature-xyz"
     }
   ],
-  "$get#frontend:frontend": [
+  "$get#frontend|:frontend": [
     {
       "d-sub": "web-app-rc",
       "c-sub": "web-app-rc"
@@ -11049,14 +10997,6 @@
       "c-sub": "6379"
     },
     {
-      "d-sub": "27017",
-      "c-sub": "27017"
-    },
-    {
-      "d-sub": "9092",
-      "c-sub": "9092"
-    },
-    {
       "d-sub": "8000",
       "c-sub": "8000"
     },
@@ -11067,61 +11007,9 @@
     {
       "d-sub": "9090",
       "c-sub": "9090"
-    },
-    {
-      "d-sub": "8181",
-      "c-sub": "8181"
-    },
-    {
-      "d-sub": "9000",
-      "c-sub": "9000"
-    },
-    {
-      "d-sub": "8443",
-      "c-sub": "8443"
-    },
-    {
-      "d-sub": "8089",
-      "c-sub": "8089"
-    },
-    {
-      "d-sub": "3001",
-      "c-sub": "3001"
-    },
-    {
-      "d-sub": "3306",
-      "c-sub": "3306"
-    },
-    {
-      "d-sub": "5001",
-      "c-sub": "5001"
-    },
-    {
-      "d-sub": "9091",
-      "c-sub": "9091"
-    },
-    {
-      "d-sub": "8010",
-      "c-sub": "8010"
-    },
-    {
-      "d-sub": "7000",
-      "c-sub": "7000"
-    },
-    {
-      "d-sub": "8082",
-      "c-sub": "8082"
-    },
-    {
-      "d-sub": "8083",
-      "c-sub": "8083"
-    },
-    {
-      "d-sub": "8084",
-      "c-sub": "8084"
     }
   ],
-  "$port-forward#mypod:mypod": [
+  "$port-forward#mypod|:mypod": [
     {
       "d-sub": "mypod",
       "c-sub": "mypod"
@@ -11141,42 +11029,6 @@
     {
       "d-sub": "backend-pod",
       "c-sub": "backend-pod"
-    },
-    {
-      "d-sub": "database-pod",
-      "c-sub": "database-pod"
-    },
-    {
-      "d-sub": "proxy-service-pod",
-      "c-sub": "proxy-service-pod"
-    },
-    {
-      "d-sub": "gateway-pod",
-      "c-sub": "gateway-pod"
-    },
-    {
-      "d-sub": "media-stream-pod",
-      "c-sub": "media-stream-pod"
-    },
-    {
-      "d-sub": "payment-gateway-pod",
-      "c-sub": "payment-gateway-pod"
-    },
-    {
-      "d-sub": "auth-service-pod",
-      "c-sub": "auth-service-pod"
-    },
-    {
-      "d-sub": "monitoring-pod",
-      "c-sub": "monitoring-pod"
-    },
-    {
-      "d-sub": "vpn-service-pod",
-      "c-sub": "vpn-service-pod"
-    },
-    {
-      "d-sub": "email-service-pod",
-      "c-sub": "email-service-pod"
     },
     {
       "d-sub": "proxy-server-pod",
@@ -11207,7 +11059,7 @@
       "c-sub": "chat-app-pod"
     }
   ],
-  "$port-forward#mydeployment:mydeployment": [
+  "$port-forward#:mydeployment": [
     {
       "d-sub": "mydeployment",
       "c-sub": "mydeployment"
@@ -11223,26 +11075,6 @@
     {
       "d-sub": "database-deployment",
       "c-sub": "database-deployment"
-    },
-    {
-      "d-sub": "cache-cluster-deployment",
-      "c-sub": "cache-cluster-deployment"
-    },
-    {
-      "d-sub": "load-balancer-deployment",
-      "c-sub": "load-balancer-deployment"
-    },
-    {
-      "d-sub": "proxy-service-deployment",
-      "c-sub": "proxy-service-deployment"
-    },
-    {
-      "d-sub": "frontend-deployment",
-      "c-sub": "frontend-deployment"
-    },
-    {
-      "d-sub": "backend-microservice-deployment",
-      "c-sub": "backend-microservice-deployment"
     },
     {
       "d-sub": "log-aggregator-deployment",
@@ -11261,18 +11093,6 @@
       "c-sub": "notification-handler-deployment"
     },
     {
-      "d-sub": "payment-processor-deployment",
-      "c-sub": "payment-processor-deployment"
-    },
-    {
-      "d-sub": "user-management-deployment",
-      "c-sub": "user-management-deployment"
-    },
-    {
-      "d-sub": "order-processing-deployment",
-      "c-sub": "order-processing-deployment"
-    },
-    {
       "d-sub": "search-engine-deployment",
       "c-sub": "search-engine-deployment"
     },
@@ -11281,19 +11101,11 @@
       "c-sub": "email-server-deployment"
     },
     {
-      "d-sub": "gateway-deployment",
-      "c-sub": "gateway-deployment"
-    },
-    {
-      "d-sub": "scheduler-app-deployment",
-      "c-sub": "scheduler-app-deployment"
-    },
-    {
       "d-sub": "analytics-platform-deployment",
       "c-sub": "analytics-platform-deployment"
     }
   ],
-  "$port-forward#myservice:myservice": [
+  "$port-forward#:myservice": [
     {
       "d-sub": "web-service",
       "c-sub": "web-service"
@@ -11307,22 +11119,6 @@
       "c-sub": "database-service"
     },
     {
-      "d-sub": "cache-service",
-      "c-sub": "cache-service"
-    },
-    {
-      "d-sub": "loadbalancer-service",
-      "c-sub": "loadbalancer-service"
-    },
-    {
-      "d-sub": "proxy-service",
-      "c-sub": "proxy-service"
-    },
-    {
-      "d-sub": "frontend-service",
-      "c-sub": "frontend-service"
-    },
-    {
       "d-sub": "backend-service",
       "c-sub": "backend-service"
     },
@@ -11333,14 +11129,6 @@
     {
       "d-sub": "monitoring-service",
       "c-sub": "monitoring-service"
-    },
-    {
-      "d-sub": "authentication-service",
-      "c-sub": "authentication-service"
-    },
-    {
-      "d-sub": "notification-service",
-      "c-sub": "notification-service"
     },
     {
       "d-sub": "payment-service",
@@ -11801,7 +11589,7 @@
       "c-sub": "feature=feature-xyz"
     }
   ],
-  "#approve#csr-sqgzp:csr-sqgzp": [
+  "$approve#csr-sqgzp:csr-sqgzp": [
     {
       "d-sub": "csr-sqgzp",
       "c-sub": "csr-sqgzp"
@@ -11887,7 +11675,7 @@
       "c-sub": "csr-proxy-15"
     }
   ],
-  "#deny#csr-sqgzp:csr-sqgzp": [
+  "$deny#csr-sqgzp:csr-sqgzp": [
     {
       "d-sub": "csr-sqgzp",
       "c-sub": "csr-sqgzp"
@@ -12497,7 +12285,7 @@
       "c-sub": "monitoring-node-15"
     }
   ],
-  "api-resources#:name": [
+  "$api-resources#:name": [
     {
       "d-sub": "name",
       "c-sub": "name"
@@ -12859,7 +12647,7 @@
       "c-sub": "security-user"
     }
   ],
-  "$get-context#:my-context": [
+  "$get-contexts#:my-context": [
     {
       "d-sub": "dev-context",
       "c-sub": "dev-context"
@@ -13115,7 +12903,7 @@
       "c-sub": "sun-cluster"
     }
   ],
-  "$get#cluster-admin:cluster-admin": [
+  "$set#cluster-admin:cluster-admin": [
     {
       "d-sub": "admin",
       "c-sub": "admin"
@@ -13197,7 +12985,7 @@
       "c-sub": "security-user"
     }
   ],
-  "$get-context#:my-context": [
+  "$set#:my-context": [
     {
       "d-sub": "dev-context",
       "c-sub": "dev-context"
@@ -13709,7 +13497,7 @@
       "c-sub": "sun-cluster"
     }
   ],
-  "$use-context#e2e:e2e": [
+  "$view#e2e:e2e": [
     {
       "d-sub": "my-k8s-cluster",
       "c-sub": "my-k8s-cluster"
@@ -13809,7 +13597,7 @@
       "c-sub": "resource=configmaps"
     }
   ],
-  "$explain#:spec.continers": [
+  "$explain#:spec.containers": [
     {
       "d-sub": "",
       "c-sub": "metadata.name"
