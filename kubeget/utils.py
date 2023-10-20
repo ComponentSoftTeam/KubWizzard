@@ -3,9 +3,9 @@ import pickle
 import json
 import os
 
-import time
 import random
 import string
+import re
 
 from config import CACHE_DIR
 
@@ -19,6 +19,11 @@ def load_json(filename):
 def dump_json(data, filename):
     with open(filename, "w") as f:
         json.dump(data, f)
+
+
+command_splitter = re.compile(r"\s*[,=]\s*|\s+")
+def command_split(command):
+    return [x for x in command_splitter.split(command) if x != '']
 
 def cached(func):
     def wrapper(*args, **kwargs):
