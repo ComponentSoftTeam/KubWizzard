@@ -29,8 +29,8 @@ def main(args):
         dataset = generate_chain_of_thought(dataset)
 
 
-    # if args.upload:
-    #     upload(train_dataset, validate_dataset)
+    if args.upload:
+        upload(dataset)
     if args.dump:
         dataset.dump(args.dump)
 

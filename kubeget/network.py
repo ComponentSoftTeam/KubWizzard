@@ -1,23 +1,21 @@
-from datasets import DatasetDict, Dataset
+import datasets
 import concurrent.futures
 
+from tqdm import tqdm
+
 from config import HUGGINGFACE_DATASET_REPO
+from dataset import Dataset
 
 def batch_request(fn, data, N):
     """Runs fn(row, i, data) for every row in data, keeps N processes running at a time (if available)"""
 
-    with concurrent.futures.ThreadPoolExecutor(N) as executor:
-        futures = [executor.submit(fn, row, i, data) for i, row in enumerate(data)]
-        for future in concurrent.futures.as_completed(futures):
-            future.result()
+    with tqdm(total=len(data), leave=True, desc=f"Batch requests to {fn.__name__}") as pbar:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=N) as executor:
+            for __ in executor.map(fn, data):
+              pbar.update()
 
-
-
-def upload(train_dataset, validate_dataset):
+def upload(dataset: Dataset):
     """Uploads a train and validate split to huggingface"""
     
-    ddict = DatasetDict({
-        "train": Dataset.from_list(train_dataset),
-        "validate": Dataset.from_list(validate_dataset),
-    })
-    ddict.push_to_hub(HUGGINGFACE_DATASET_REPO)
+    hub_dataset = datasets.Dataset.from_list([ entry.dict() for entry in dataset])
+    hub_dataset.push_to_hub(HUGGINGFACE_DATASET_REPO)

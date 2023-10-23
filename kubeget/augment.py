@@ -4,6 +4,7 @@ from dataset import Dataset
 from gpt import gpt
 from tqdm import tqdm
 import random
+from network import batch_request
 
 from utils import load_json
 
@@ -65,8 +66,10 @@ def generate_instructions(dataset: Dataset):
     general_questions = [question for question in questions if not question['specific']]
 
     # seed the random function to make the caching work
+    # generating the prompting separately to make caching more efficient
     random.seed(0)
-    for entry in tqdm(dataset, leave=True, desc="Generate instructions"):
+    dataset_with_prompts = []
+    for entry in tqdm(dataset, leave=True, desc="Generate prompts"):
         command = entry.command
         objective = entry.objective
         
@@ -91,17 +94,12 @@ def generate_instructions(dataset: Dataset):
             f'Instruction: '
         )
 
-        instruction = gpt(K8S_INSTRUCTION, prompt)
-        
-        entry.question = instruction
+        dataset_with_prompts.append((entry, prompt))
 
-        print("Prompt", '-'*10, '\n')
-        print(prompt)
-        print("Answer", '-'*10, '\n')
-        
-        print(instruction)
-        print('-'*16, '\n')
+    def batch_gpt(data):
+        entry, prompt = data
+        entry.question = gpt(K8S_INSTRUCTION, prompt).strip()
 
-        input("Press enter to continue")
+    batch_request(batch_gpt, dataset_with_prompts, 12)
 
     return dataset

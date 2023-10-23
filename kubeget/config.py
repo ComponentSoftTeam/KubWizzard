@@ -17,7 +17,7 @@ class Config:
     def __init__(self):
         
         load_dotenv()
-        # login(os.getenv("HUGGINGFACE_API_KEY"))
+        login(os.getenv("HUGGINGFACE_API_KEY"))
         openai.api_key = os.getenv("OPENAI_API_KEY")
       
         self.HUGGINGFACE_DATASET_REPO: str = os.getenv("HUGGINGFACE_DATASET_REPO")

@@ -33,12 +33,7 @@ def create_scores(dataset: Dataset):
 def sample(dataset, base_dataset, args):
     SAMPLES_NUM = args.sample
 
-    # result_dataset = [result for result in result_dataset if result["command"] in result["example_code"]]
-    # result_dataset = [result for result in result_dataset if '|' not in result["example_code"][:result["example_code"].index(result["command"])]]
-    # result_dataset = [result for result in result_dataset if result["example_code"].startswith('kubectl')]
-
     # calculate the entropies for each entry
-    
     dataset_with_scores = create_scores(dataset)
 
     # sort by entropy desc
