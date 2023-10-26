@@ -4,7 +4,7 @@ from tqdm import tqdm
 import requests
 import time
 from dataset import Dataset, Entry
-
+import re
 from utils import cached, get_unique_id
 
 
@@ -75,6 +75,9 @@ def parse_kubectl():
 
     dataset = Dataset()
     blocks = soup.select(f"div.{UNIQUE_MARKER}")
+
+
+    desc_links = re.compile(r'\[http.*\]')
     for block in tqdm(blocks, leave=True, desc="kubectl scrape"):
         example_context = block.select("blockquote.example")
         example_code = block.select("blockquote.example+pre>code")
@@ -99,14 +102,21 @@ def parse_kubectl():
                 flag_name, flag_short, flag_default, flag_usage = [
                     r.text for r in row.select("td")
                 ]
-                if flag_short:
-                    flags.append(
-                        f'"flag": "--{flag_name}", "short": "-{flag_short}", "default": "{flag_default}", "usage": "{flag_usage}"'
-                    )
 
-            flags = "\n".join(flags)
+                # strip out links
+
+                flag_usage = desc_links.sub('', flag_usage)
+
+                flag = {
+                    "option": flag_name.strip(),
+                    "short": flag_short or None,
+                    "default": flag_default or None,
+                    "description": flag_usage.strip()
+                }
+
+                flags.append(flag)
         else:
-            flags = ""
+            flags = []
 
         command_name = block.select_one("h1").text.strip()
 
