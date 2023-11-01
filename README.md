@@ -10,4 +10,4 @@ The finetuning process of the base model is documented in this notebook
 
 | Target          | Notebook                                       |
 | --------------- | ---------------------------------------------- |
-| Kubectl    | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ComponentSoftTeam/Mistral-Kubectl-Instruc/blob/main/notebooks/q-lora-mistra-7b.ipynb) |
+| Kubectl    | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ComponentSoftTeam/Mistral-Kubectl-Instruct/blob/main/notebooks/q-lora-mistra-7b.ipynb) |
