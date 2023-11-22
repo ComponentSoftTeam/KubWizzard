@@ -4,3 +4,4 @@
 !requirements.txt
 .env
 .cache
+__pycache__
