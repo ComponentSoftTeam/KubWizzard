@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional, Set
+from typing import Dict, List, Optional, Set
 from dataclasses import dataclass
 
 @dataclass
@@ -9,7 +9,7 @@ class Entry:
     command:str
     description:str
     syntax:str
-    flags:str
+    flags: List[Dict[str, str | None]]
     question: Optional[str] = None
     chain_of_thought: Optional[str] = None
 
@@ -37,11 +37,40 @@ class Entry:
             command = command[len('kubectl '):]
 
         return command
+    
+    def get_relevant_docs(self):
+        relevant_flags = list()
+
+        for flag in self.flags:
+            option = flag['option']
+            short = flag['short']
+            default = flag['default']
+
+            if option.strip() == '':
+                raise RuntimeError('Error missing option')
+            
+            option = f' --{option.strip()}'
+
+            if short:
+                short = f' -{short.strip()}'
+
+            if option in self.command or (short and short in self.command) or default:
+                relevant_flags.append(flag)
+
+        return {
+            "syntax": self.syntax,
+            "flags": relevant_flags,
+        }
        
 class Dataset:
     def __init__(self, entries: List[Entry] = None, hashes: Set[int] = None):
-        self.entries = entries or []
-        self.hashes = hashes or set()
+        if entries and not hashes:
+            self.entries = []
+            self.hashes = set()
+            self.add_entries(entries)
+        else:
+            self.entries = entries or []
+            self.hashes = hashes or set()
 
     def add_entry(self, entry: Entry):
         entry_hash = hash(entry)

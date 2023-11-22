@@ -1,0 +1,733 @@
+{
+  "chapter_metadata": [
+    {
+      "title": "Introduction",
+      "parts": [
+        {
+          "title": "The Path to Cloud Native",
+          "parts": []
+        },
+        {
+          "title": "Distributed Primitives",
+          "parts": [
+            "Containers",
+            "Pods",
+            "Services",
+            "Labels",
+            "Namespaces"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Predictable Demands",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Runtime Dependencies",
+            "Resource Profiles",
+            "Pod Priority",
+            "Project Resources",
+            "Capacity Planning"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Declarative Deployment",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Rolling Deployment",
+            "Fixed Deployment",
+            "Blue-Green Release",
+            "Canary Release"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Health Probe",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Process Health Checks",
+            "Liveness Probes",
+            "Readiness Probes",
+            "Startup Probes"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Managed Lifecycle",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "SIGTERM Signal",
+            "SIGKILL Signal",
+            "PostStart Hook",
+            "PreStop Hook",
+            "Other Lifecycle Controls"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Automated Placement",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Available Node Resources",
+            "Container Resource Demands",
+            "Scheduler Configurations",
+            "Scheduling Process",
+            "Node Affinity",
+            "Pod Affinity and Anti-Affinity",
+            "Topology Spread Constraints",
+            "Taints and Tolerations"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Batch Job",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Periodic Job",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Daemon Service",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Singleton Service",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Out-of-Application Locking",
+            "In-Application Locking",
+            "Pod Disruption Budget"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Stateless Service",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Instances",
+            "Networking",
+            "Storage"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Stateful Service",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": [
+            "Storage",
+            "Networking",
+            "Identity",
+            "Ordinality",
+            "Other Requirements"
+          ]
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Storage",
+            "Networking",
+            "Identity",
+            "Ordinality",
+            "Other Features"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Service Discovery",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Internal Service Discovery",
+            "Manual Service Discovery",
+            "Service Discovery from Outside the Cluster",
+            "Application Layer Service Discovery"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Self Awareness",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Init Container",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Sidecar",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Adapter",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Ambassador",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "EnvVar Configuration",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Configuration Resource",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Immutable Configuration",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Docker Volumes",
+            "Kubernetes Init Containers",
+            "OpenShift Templates"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Configuration Template",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Process Containment",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Running Containers with a Non-Root User",
+            "Restricting Container Capabilities",
+            "Avoiding a Mutable Container Filesystem",
+            "Enforcing Security Policies"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Network Segmentation",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Network Policies",
+            "Authorization Policies"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Secure Configuration",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Out-of-Cluster Encryption",
+            "Centralized Secret Management"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Access Control",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Authentication",
+            "Authorization",
+            "Admission Controllers",
+            "Subject",
+            "Role-Based Access Control"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Controller",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": []
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Operator",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Custom Resource Definitions",
+            "Controller and Operator Classification",
+            "Operator Development and Deployment",
+            "Example"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Elastic Scale",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Manual Horizontal Scaling",
+            "Horizontal Pod Autoscaling",
+            "Vertical Pod Autoscaling",
+            "Cluster Autoscaling",
+            "Scaling Levels"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    },
+    {
+      "title": "Image Builder",
+      "parts": [
+        {
+          "title": "Problem",
+          "parts": []
+        },
+        {
+          "title": "Solution",
+          "parts": [
+            "Container Image Builder",
+            "Build Orchestrators",
+            "Build Pod",
+            "OpenShift Build"
+          ]
+        },
+        {
+          "title": "Discussion",
+          "parts": []
+        },
+        {
+          "title": "More Information",
+          "parts": []
+        }
+      ]
+    }
+  ]
+}

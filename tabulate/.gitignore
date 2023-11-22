@@ -1,0 +1,6 @@
+*.txt
+*.json
+!toc.json
+!requirements.txt
+.env
+.cache

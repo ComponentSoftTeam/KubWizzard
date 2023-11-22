@@ -18,38 +18,44 @@ def generate_chain_of_thought(dataset: Dataset):
 
     # seed the random function to make the caching work
     random.seed(0)
-    for entry in tqdm(dataset, leave=True, desc="Generate CoT"):
+
+    dataset_with_prompts = []
+    for entry in tqdm(dataset, leave=True, desc="Generate CoT prompts"):
         command = entry.command
         objective = entry.objective
         question = entry.question
 
-        docs = json.dumps(entry.dict())
         examples = random.sample(questions, 3)
         example_prompt = '\n\n'.join(f'General idea: {example["general"]}\Instruction: {example["instruction"]}\nCommand: {example["command"]}\nChain of Thought: {example["chain_of_thought"]}' for example in examples)
 
+        docs = entry.get_relevant_docs()
+       
+
+        docs_prompt = ""
+        if docs['flags']:
+            docs_prompt = (
+              f'Do not comment about flags that could be used\n'
+              f'If a flag is not specified in the command, consider the default found in the docs\n'    
+              f'To understand the flags use the documentation JSON format here: {json.dumps(docs)}\n\n'
+            )
+            
         prompt = (
             f'Generate the chain of thought process for the given command, based on the general idea and the instruction.\n\n'
             f'{example_prompt}\n\n'
             f'General idea: {objective}\n'
             f'Instruction: {question}\n'
             f'Command: {command}\n'
-            f'You can find the documentation for the command here in JSON format: {docs}\n\n'
+            f'{docs_prompt}'
             f'Chain of Thought: '
         )
 
-        chain_of_thought = gpt(K8S_COT, prompt)
+        dataset_with_prompts.append((entry, prompt))
 
-        entry.chain_of_thought = chain_of_thought
+    def batch_gpt(data):
+        entry, prompt = data
+        entry.chain_of_thought = gpt(K8S_COT, prompt).strip()
 
-        print("Prompt", '-'*10, '\n')
-        print(prompt)
-        print("Answer", '-'*10, '\n')
-
-        print(chain_of_thought)
-        print('-'*16, '\n')
-
-        input("Press enter to continue")
-        
+    batch_request(batch_gpt, dataset_with_prompts, 12)
 
     return dataset
 
@@ -69,7 +75,7 @@ def generate_instructions(dataset: Dataset):
     # generating the prompting separately to make caching more efficient
     random.seed(0)
     dataset_with_prompts = []
-    for entry in tqdm(dataset, leave=True, desc="Generate prompts"):
+    for entry in tqdm(dataset, leave=True, desc="Generate question prompts"):
         command = entry.command
         objective = entry.objective
         

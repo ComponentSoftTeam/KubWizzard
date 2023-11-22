@@ -26,8 +26,7 @@ def main(args):
         dataset = generate_instructions(dataset)
 
     if args.cot:
-        dataset = generate_chain_of_thought(dataset)
-
+        dataset = generate_chain_of_thought(Dataset(dataset[:19_800]))
 
     if args.upload:
         upload(dataset)
