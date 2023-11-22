@@ -440,7 +440,7 @@ def main():
 
     vectors=[{"id": str(i), "values": entry.embedding, "metadata": {"text": entry.text}} for i, entry in enumerate(tokens)]
 
-    for i in tqdm(range(len(vectors)//10)):
+    for i in tqdm(range((len(vectors) + 9)//10)):
         vecs = vectors[i*10: i*10 + 10]
         index.upsert(vectors=vecs)
 
