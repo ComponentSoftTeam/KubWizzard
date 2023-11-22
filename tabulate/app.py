@@ -3,6 +3,7 @@ import json
 import sys
 from typing import Any, List, Tuple
 from PyPDF2 import PdfReader
+from tqdm import tqdm
 from network import batch_request
 from utils import cached
 import re
@@ -154,12 +155,12 @@ def process_content(content):
     for i, yaml in enumerate(yamls):
         uid = f"_YAML${i}_"
         for j, chunk in enumerate(chunks):
-            chunks[j] = chunk.replace(uid, f'\n{yaml}\n')
+            chunks[j] = chunk.replace(uid, f'\n```yaml\n{yaml}\n```\n')
             
     for i, script in enumerate(scripts):
         uid = f"_CODE${i}_"
         for j, chunk in enumerate(chunks):
-            chunks[j] = chunk.replace(uid, f'\n{script}\n')
+            chunks[j] = chunk.replace(uid, f'\n```bash\n{script}\n```\n')
 
     for j, chunk in enumerate(chunks):
         chunks[j] = strip_left_space(chunk)
@@ -325,7 +326,7 @@ def cleanup(text):
         R''')$)*'''
     ), re.MULTILINE )
 
-    bash_re = re.compile(r'^\s*\$[^\\\n]*(?:\\\s*$\n[^\\\n]*)*', flags=re.MULTILINE)
+    bash_re = re.compile(r'(?:^\s*\$[^\\\n]*(?:\\\s*$\n[^\\\n]*)*|^\s*(?:kubectl|docker)[^\\\n]*(?:\\\s*$\n\s+[^\\\n]*)+)', flags=re.MULTILINE)
 
     for i, match in enumerate(yaml_re.finditer(text)):
         m = match.group(0)
@@ -406,6 +407,9 @@ def main():
     tokens = []
     apply(text, lambda x: tokens.append(Data(x, None)))
     
+    with open("test.txt", "w") as f:
+        f.write('\n'.join(str(t) for t in text))
+    
     @cached
     def create_embedding(text: str):
         for _ in range(4):  
@@ -428,24 +432,23 @@ def main():
 
     pinecone_name = "k8s"
     pinecone.delete_index(pinecone_name)
+    print("Deleted index")
     pinecone.create_index(pinecone_name, dimension=len(tokens[0].embedding), metric="cosine")
+    print("Created index")
     pinecone.describe_index(pinecone_name)
     index = pinecone.Index(pinecone_name)
 
     vectors=[{"id": str(i), "values": entry.embedding, "metadata": {"text": entry.text}} for i, entry in enumerate(tokens)]
 
-    for i in range(len(vectors)//10):
+    for i in tqdm(range(len(vectors)//10)):
         vecs = vectors[i*10: i*10 + 10]
         index.upsert(vectors=vecs)
 
-    # for token in tokens:
-    #     text = token["text"]
-    #     vec = token["embedding"]
-
     index.describe_index_stats()
+
 if __name__ == '__main__':
-    # main()
-    text="What is a pod?"
-    res = openai.embeddings.create(input=text, model="text-embedding-ada-002").data[0].embedding
-    with open("test.txt", "w") as f:
-        f.write(','.join(str(d) for d in res))
+    main()
+    # text="What is a pod?"
+    # res = openai.embeddings.create(input=text, model="text-embedding-ada-002").data[0].embedding
+    # with open("test.txt", "w") as f:
+    #     f.write(','.join(str(d) for d in res))

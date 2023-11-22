@@ -1,4 +1,3 @@
-pickle
 PyPDF2
 openai
 python-dotenv
