@@ -1,4 +1,4 @@
-# Mistral Kubectl Instruct
+# KubWizzard
 Fine-tuning an instruction-tuned Mistral 7B model with instruction-code pairs, specifically with kubectl commands.
 
 ## Dataset
