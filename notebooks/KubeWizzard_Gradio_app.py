@@ -1,7 +1,4 @@
-import re
 import torch
-import time
-import pinecone
 import pickle
 import os
 import numpy as np
@@ -16,6 +13,7 @@ from peft import PeftModel
 from bs4 import BeautifulSoup
 import requests
 import logging
+from pinecone import Pinecone, ServerlessSpec
 
 logging.basicConfig(format='[%(asctime)s] %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
@@ -25,6 +23,17 @@ headers = {
     "Cookie": "CONSENT=YES+cb.20210418-17-p0.it+FX+917; ",
 }
 
+PINECONE_INDEX_NAME = "kubwizzard"
+PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
+INDEX_NAME = "k8s-semantic-search"
+CACHE_DIR = "./.cache"
+
+cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
+pinecone_client = Pinecone(api_key=PINECONE_API_KEY)
+sentencetransformer_model = SentenceTransformer('sentence-transformers/multi-qa-mpnet-base-cos-v1')
+
+if not os.path.exists(CACHE_DIR):
+    os.makedirs(CACHE_DIR)
 
 def google_search(text):
     logging.info(f"Google search on: {text}")
@@ -50,19 +59,6 @@ def google_search(text):
 
     return ans
 
-PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
-
-pinecone.init(api_key=PINECONE_API_KEY, environment="gcp-starter")
-
-sentencetransformer_model = SentenceTransformer('sentence-transformers/multi-qa-mpnet-base-cos-v1')
-
-CACHE_DIR = "./.cache"
-INDEX_NAME = "k8s-semantic-search"
-
-if not os.path.exists(CACHE_DIR):
-    os.makedirs(CACHE_DIR)
-
-
 def cached(func):
     def wrapper(*args, **kwargs):
         SEP = "$|$"
@@ -87,27 +83,18 @@ def cached(func):
 
     return wrapper
 
-
 @cached
 def create_embedding(text: str):
     embed_text = sentencetransformer_model.encode(text)
     
     return embed_text.tolist()
 
-
-index = pinecone.Index(INDEX_NAME)
-
-
 def query_from_pinecone(query, top_k=3):
     embedding = create_embedding(query)
     if not embedding:
         return None
 
-    return index.query(vector=embedding, top_k=top_k, include_metadata=True).get("matches")  # gets the metadata (text)
-
-
-cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
-
+    return pinecone_client.Index(PINECONE_INDEX_NAME).query(vector=embedding, top_k=top_k, include_metadata=True).get("matches")  # gets the metadata (text)
 
 def get_results_from_pinecone(query, top_k=3, re_rank=True, verbose=True):
     results_from_pinecone = query_from_pinecone(query, top_k=top_k)
@@ -153,7 +140,6 @@ def get_results_from_pinecone(query, top_k=3, re_rank=True, verbose=True):
             )
 
     return final_results
-
 
 def semantic_search(prompt):
     final_results = get_results_from_pinecone(prompt, top_k=9, re_rank=True, verbose=True)

@@ -1,0 +1,9 @@
+transformers
+peft
+bitsandbytes
+torch
+scipy
+pinecone-client
+sentence_transformers
+tqdm
+beautifulsoup4
