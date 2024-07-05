@@ -13,12 +13,12 @@ from transformers import AutoTokenizer
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
-import pinecone
+from pinecone import Pinecone, ServerlessSpec
 
 load_dotenv()
 openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-pinecone.init(api_key=os.getenv("PINECONE_API_KEY"), environment="gcp-starter")
+pinecone_client = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 
 yamls = []
 scripts = []
@@ -430,21 +430,29 @@ def main():
 
     batch_request(batch_embedding, tokens, 12)
 
-    pinecone_name = "k8s"
-    pinecone.delete_index(pinecone_name)
-    print("Deleted index")
-    pinecone.create_index(pinecone_name, dimension=len(tokens[0].embedding), metric="cosine")
+    pinecone_name = "kubwizzard"
+    index_names = [index.name for index in pinecone_client.list_indexes()]
+
+    if pinecone_name in index_names:
+        pinecone_client.delete_index(pinecone_name)
+        print("Deleted index")
+        
+    pinecone_client.create_index(
+        name=pinecone_name,
+        dimension=len(tokens[0].embedding),
+        metric="cosine",
+        spec=ServerlessSpec(cloud="aws", region="eu-west-1")
+        )
     print("Created index")
-    pinecone.describe_index(pinecone_name)
-    index = pinecone.Index(pinecone_name)
+    pinecone_client.describe_index(pinecone_name)
 
     vectors=[{"id": str(i), "values": entry.embedding, "metadata": {"text": entry.text}} for i, entry in enumerate(tokens)]
 
     for i in tqdm(range((len(vectors) + 9)//10)):
         vecs = vectors[i*10: i*10 + 10]
-        index.upsert(vectors=vecs)
+        pinecone_client.Index(pinecone_name).upsert(vectors=vecs)
 
-    index.describe_index_stats()
+    pinecone_client.Index(pinecone_name).describe_index_stats()
 
 if __name__ == '__main__':
     main()
