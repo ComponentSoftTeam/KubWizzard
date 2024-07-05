@@ -7,3 +7,4 @@ pinecone-client
 sentence_transformers
 tqdm
 beautifulsoup4
+openai

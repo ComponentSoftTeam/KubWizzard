@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 import requests
 import logging
 from pinecone import Pinecone, ServerlessSpec
+from openai import OpenAI
 
 logging.basicConfig(format='[%(asctime)s] %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
@@ -30,7 +31,7 @@ CACHE_DIR = "./.cache"
 
 cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
 pinecone_client = Pinecone(api_key=PINECONE_API_KEY)
-sentencetransformer_model = SentenceTransformer('sentence-transformers/multi-qa-mpnet-base-cos-v1')
+openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 if not os.path.exists(CACHE_DIR):
     os.makedirs(CACHE_DIR)
@@ -85,9 +86,9 @@ def cached(func):
 
 @cached
 def create_embedding(text: str):
-    embed_text = sentencetransformer_model.encode(text)
+    embed_text = openai.embeddings.create(input=text, model="text-embedding-ada-002").data[0].embedding
     
-    return embed_text.tolist()
+    return embed_text
 
 def query_from_pinecone(query, top_k=3):
     embedding = create_embedding(query)
